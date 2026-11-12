@@ -1,0 +1,64 @@
+# Dependências Node
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Metro Bundler
+.metro-health-check*
+
+# Artefatos de Build Android / Gradle (mantendo código-fonte nativo versionado)
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/local.properties
+.gradle/
+.kotlin/
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# iOS (caso gerado futuramente)
+/ios
+
+# Pacotes compilados e binários
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Chaves, Certificados e Assinaturas Privadas
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+
+# Variáveis de Ambiente Locais
+.env*.local
+
+# TypeScript e Caches
+*.tsbuildinfo
+.npm/
+.eslintcache
+
+# Logs e Debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# Sistema Operacional e IDEs (macOS / Android Studio / VSCode)
+.DS_Store
+*.orig.*
+*.iml
+.idea/
+.vscode/
