@@ -24,11 +24,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Configurar Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Aceitar licenças do Android SDK
-        run: yes | sdkmanager --licenses > /dev/null || true
+        run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
 
       - name: Configurar cache do Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -44,7 +41,7 @@ jobs:
 
       - name: Compilar APK Release (Standalone)
         working-directory: android
-        run: ./gradlew assembleRelease -Dorg.gradle.java.home=$JAVA_HOME
+        run: ./gradlew assembleRelease
 
       - name: Publicar APK para Download
         uses: actions/upload-artifact@v4

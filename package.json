@@ -36,7 +36,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "build:apk": "rm -rf android/app/build/generated/assets/react/release && ./android/gradlew -p android --gradle-user-home /Volumes/extFiles/Android/.gradle assembleRelease && cp android/app/build/outputs/apk/release/app-release.apk ./controle-despesas.apk"
+    "build:apk": "rm -rf android/app/build/generated/assets/react/release && ./android/gradlew -p android --gradle-user-home /Volumes/extFiles/Android/.gradle -Dorg.gradle.java.home=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home assembleRelease && cp android/app/build/outputs/apk/release/app-release.apk ./controle-despesas.apk"
   },
   "private": true
 }
