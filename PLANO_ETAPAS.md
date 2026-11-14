@@ -107,4 +107,4 @@
   - [x] Versionar `android/app/debug.keystore` (`!android/app/debug.keystore` no `.gitignore`) para manter a mesma assinatura digital entre builds locais e da nuvem.
 - [x] **5.2. Workflow Manual (`.github/workflows/build-apk.yml`):**
   - [x] Configurar gatilho exclusivamente manual (`on: workflow_dispatch`).
-  - [x] Configurar Node 22 LTS, OpenJDK 17, Android SDK, cache do Gradle, `npm run typecheck`, `./gradlew assembleRelease` e publicação do artefato `controle-despesas-apk`.
+  - [x] Configurar Node 22 LTS, OpenJDK 17, Android SDK, cache do Gradle, `npm run typecheck`, `./gradlew assembleRelease` e publicação do artefato `.zip` e do instalador `.apk` versionados dinamicamente (`controle-despesas-v<versao>.zip` contendo `controle-despesas-v<versao>.apk`).

@@ -30,6 +30,10 @@ jobs:
       - name: Configurar cache do Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Extrair versão do aplicativo
+        id: pkg_version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Instalar dependências NPM
         run: npm ci
 
@@ -43,10 +47,13 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease
 
+      - name: Renomear APK com a versão
+        run: mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/controle-despesas-v${{ steps.pkg_version.outputs.version }}.apk
+
       - name: Publicar APK para Download
         uses: actions/upload-artifact@v4
         with:
-          name: controle-despesas-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: controle-despesas-v${{ steps.pkg_version.outputs.version }}
+          path: android/app/build/outputs/apk/release/controle-despesas-v${{ steps.pkg_version.outputs.version }}.apk
           if-no-files-found: error
           retention-days: 30
