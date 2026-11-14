@@ -252,16 +252,21 @@ export class DashboardService {
   <meta charset="utf-8" />
   <title>Resultados - ${DashboardService.escapeHtml(formattedYearMonth)}</title>
   <style>
+    @page {
+      size: A4 portrait;
+      margin: 16mm 12mm;
+    }
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
     }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Roboto", "Segoe UI", sans-serif;
       background-color: #FAFAFA;
       color: #1C1B1F;
-      padding: 24px;
     }
     .appbar {
       background-color: #1565C0;
@@ -272,6 +277,8 @@ export class DashboardService {
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .appbar-title {
       font-size: 20px;
@@ -291,6 +298,8 @@ export class DashboardService {
       font-size: 18px;
       font-weight: bold;
       margin-bottom: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .total-card {
       background-color: #FFFFFF;
@@ -299,6 +308,8 @@ export class DashboardService {
       padding: 20px;
       text-align: center;
       margin-bottom: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .total-label {
       font-size: 14px;
@@ -320,6 +331,8 @@ export class DashboardService {
       justify-content: center;
       align-items: center;
       margin-bottom: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .empty-card {
       background-color: #FFFFFF;
@@ -329,26 +342,39 @@ export class DashboardService {
       text-align: center;
       color: #49454F;
       margin-bottom: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
     }
     .section-header {
       font-size: 15px;
       font-weight: bold;
       margin: 8px 0 8px 4px;
+      page-break-after: avoid;
+      break-after: avoid;
     }
     .list-container {
-      background-color: #FFFFFF;
-      border-radius: 12px;
-      border: 1px solid #E0E0E0;
-      overflow: hidden;
+      width: 100%;
     }
     .category-row {
       display: flex;
       align-items: center;
       padding: 14px 16px;
+      background-color: #FFFFFF;
+      border-left: 1px solid #E0E0E0;
+      border-right: 1px solid #E0E0E0;
       border-bottom: 1.5px solid #BDBDBD;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .category-row:first-child {
+      border-top: 1px solid #E0E0E0;
+      border-top-left-radius: 12px;
+      border-top-right-radius: 12px;
     }
     .category-row:last-child {
-      border-bottom: none;
+      border-bottom: 1px solid #E0E0E0;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
     }
     .left-dot-wrapper {
       padding-right: 14px;
