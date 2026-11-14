@@ -104,6 +104,12 @@ export const DataProfileScreen: React.FC = () => {
             >
               UUID: {currentUser?.id}
             </Text>
+            <Text
+              variant="labelSmall"
+              style={{ color: theme.colors.primary, marginTop: 4 }}
+            >
+              Versão 1.1.0
+            </Text>
           </View>
         </Surface>
 

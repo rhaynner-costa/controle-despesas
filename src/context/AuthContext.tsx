@@ -141,7 +141,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             expenseRepository,
             categoryRepository
           ),
-          dashboardService: new DashboardService(expenseRepository),
+          dashboardService: new DashboardService(
+            expenseRepository,
+            (open: boolean) => {
+              isSystemDialogOpenRef.current = open;
+            }
+          ),
           backupService: new BackupService(
             db,
             categoryRepository,

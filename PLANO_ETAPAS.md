@@ -78,3 +78,21 @@
   - [x] Criar `README.md` com documentação técnica, arquitetura OOP, modelagem SQLite, guia de execução no VS Code (Node 26 vs NVM e variáveis do SSD externo) e instruções de build.
   - [x] Adicionar scripts utilitários (`typecheck` e `build:apk`) no `package.json`.
   - [x] Atualizar `.gitignore` mantendo o código nativo `android/` versionado e ignorando artefatos de build (`android/build/`, `android/app/build/`, `android/.gradle/`, `android/local.properties`, `*.apk`).
+
+---
+
+## Etapa 4: Evolução `v1.1.0` — Pesquisa Dinâmica de Despesas e Exportação de Resultados em PDF (`feat/v1.1.0`)
+**Status:** ✅ Concluída
+
+- [x] **4.1. Controle de Versão (`v1.1.0`):**
+  - [x] Criar branch `feat/v1.1.0`.
+  - [x] Atualizar versão do app para `1.1.0` em `package.json`, `app.json`, `android/app/build.gradle` (`versionCode 2`, `versionName "1.1.0"`) e exibir na tela `DataProfileScreen.tsx`.
+- [x] **4.2. Pesquisa Dinâmica na Tela de Despesas (`ExpenseService.ts` + `ExpenseListScreen.tsx`):**
+  - [x] Implementar `ExpenseService.filterExpenses(expenses, rawQuery)` com normalização sem acentos (*case-insensitive*) filtrando por descrição (`description`), observações (`notes`), categoria (`categoryName`) ou dia/data específica (`expenseDate`, ex.: `"15"`, `"dia 15"`, `"15/11"`).
+  - [x] Adicionar `Searchbar` (`react-native-paper`) em `ExpenseListScreen.tsx` com filtragem em tempo real.
+- [x] **4.3. Exportação da Tela de Resultados em PDF (`DashboardService.ts` + `DashboardScreen.tsx`):**
+  - [x] Instalar `expo-print` compatível com Expo SDK 58.
+  - [x] Implementar `DashboardService.exportMonthlySummaryToPdf` gerando documento PDF com cabeçalho, card de Total do Mês, gráfico Donut em SVG vetorial e lista consolidada de distribuição por categoria com barras de progresso e percentuais, compartilhando via `expo-sharing`.
+  - [x] Adicionar ação `file-pdf-box` no `Appbar.Header` de `DashboardScreen.tsx`.
+- [x] **4.4. Validação Estática:**
+  - [x] Compilação TypeScript (`./node_modules/.bin/tsc --noEmit`) sem erros.

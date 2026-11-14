@@ -1,15 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
   Button,
   Dialog,
-  Divider,
   FAB,
   IconButton,
   List,
   Portal,
+  Searchbar,
   Snackbar,
   Surface,
   Text,
@@ -46,6 +46,7 @@ export const ExpenseListScreen: React.FC = () => {
 
   const [loading, setLoading] = useState<boolean>(true);
   const [expenses, setExpenses] = useState<IExpenseWithCategoryDTO[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [formVisible, setFormVisible] = useState<boolean>(false);
   const [editingExpense, setEditingExpense] =
     useState<IExpenseWithCategoryDTO | null>(null);
@@ -83,6 +84,13 @@ export const ExpenseListScreen: React.FC = () => {
   useEffect(() => {
     void loadExpenses();
   }, [loadExpenses, dataVersion]);
+
+  const filteredExpenses = useMemo<IExpenseWithCategoryDTO[]>(() => {
+    if (!services) {
+      return expenses;
+    }
+    return services.expenseService.filterExpenses(expenses, searchQuery);
+  }, [expenses, searchQuery, services]);
 
   const handleConfirmSoftDelete = async (): Promise<void> => {
     if (!currentUser || !services || !expenseToDelete) {
@@ -130,26 +138,47 @@ export const ExpenseListScreen: React.FC = () => {
         />
       </Surface>
 
+      <View style={styles.searchContainer}>
+        <Searchbar
+          placeholder="Buscar descrição, categoria ou dia (ex: 15)"
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
+          inputStyle={styles.searchInput}
+          elevation={1}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      </View>
+
       {loading ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" />
         </View>
       ) : (
         <FlatList
-          data={expenses}
+          data={filteredExpenses}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator
           persistentScrollbar
+          keyboardShouldPersistTaps="handled"
           contentContainerStyle={
-            expenses.length === 0 ? styles.emptyContainer : styles.listContent
+            filteredExpenses.length === 0
+              ? styles.emptyContainer
+              : styles.listContent
           }
           ListEmptyComponent={
             <View style={styles.emptyView}>
               <Text
                 variant="bodyLarge"
-                style={{ color: theme.colors.onSurfaceVariant }}
+                style={[
+                  styles.emptyText,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
               >
-                Nenhuma despesa ativa em {formattedYearMonth}.
+                {searchQuery.trim()
+                  ? `Nenhuma despesa encontrada para "${searchQuery.trim()}" em ${formattedYearMonth}.`
+                  : `Nenhuma despesa ativa em ${formattedYearMonth}.`}
               </Text>
             </View>
           }
@@ -298,6 +327,19 @@ const styles = StyleSheet.create({
   monthTitle: {
     fontWeight: 'bold',
   },
+  searchContainer: {
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    paddingBottom: 6,
+  },
+  searchbar: {
+    borderRadius: 12,
+    height: 48,
+  },
+  searchInput: {
+    minHeight: 0,
+    fontSize: 14,
+  },
   centered: {
     flex: 1,
     justifyContent: 'center',
@@ -314,6 +356,9 @@ const styles = StyleSheet.create({
   },
   emptyView: {
     alignItems: 'center',
+  },
+  emptyText: {
+    textAlign: 'center',
   },
   leftIndicator: {
     justifyContent: 'center',
