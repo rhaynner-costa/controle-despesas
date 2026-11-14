@@ -105,12 +105,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   );
   const [dataVersion, setDataVersion] = useState<number>(0);
   const isSystemDialogOpenRef = useRef<boolean>(false);
+  const preserveSessionInBackgroundRef = useRef<boolean>(false);
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
       'change',
       (nextAppState: AppStateStatus) => {
-        if (nextAppState === 'background' && !isSystemDialogOpenRef.current) {
+        if (nextAppState === 'active') {
+          if (!isSystemDialogOpenRef.current) {
+            preserveSessionInBackgroundRef.current = false;
+          }
+          return;
+        }
+        if (
+          nextAppState === 'background' &&
+          !isSystemDialogOpenRef.current &&
+          !preserveSessionInBackgroundRef.current
+        ) {
           setCurrentUser(null);
         }
       }
@@ -145,6 +156,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             expenseRepository,
             (open: boolean) => {
               isSystemDialogOpenRef.current = open;
+              if (open) {
+                preserveSessionInBackgroundRef.current = true;
+              }
             }
           ),
           backupService: new BackupService(
@@ -153,6 +167,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             expenseRepository,
             (open: boolean) => {
               isSystemDialogOpenRef.current = open;
+              if (open) {
+                preserveSessionInBackgroundRef.current = true;
+              }
             }
           ),
         };

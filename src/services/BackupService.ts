@@ -79,13 +79,13 @@ export class BackupService {
       })),
     };
 
-    const cacheDir = FileSystem.cacheDirectory;
-    if (!cacheDir) {
-      throw new Error('Diretório temporário do sistema indisponível.');
+    const targetDir = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
+    if (!targetDir) {
+      throw new Error('Diretório de armazenamento do sistema indisponível.');
     }
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const fileUri = `${cacheDir}backup-despesas-${timestamp}.json`;
+    const timestamp = this.formatBackupTimestamp(new Date());
+    const fileUri = `${targetDir}backup-despesas-${timestamp}.json`;
 
     await FileSystem.writeAsStringAsync(
       fileUri,
@@ -195,5 +195,15 @@ export class BackupService {
       await this.expenseRepository.deleteAllByUser(userId);
       await this.categoryRepository.deleteAllByUser(userId);
     });
+  }
+
+  private formatBackupTimestamp(date: Date): string {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = String(date.getFullYear());
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}-${month}-${year}-${hours}-${minutes}`;
   }
 }

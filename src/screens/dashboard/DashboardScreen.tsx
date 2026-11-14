@@ -74,7 +74,6 @@ export const DashboardScreen: React.FC = () => {
         formattedYearMonth,
         currentUser.username
       );
-      setSnackbarMessage('Relatório PDF gerado com sucesso.');
     } catch (error) {
       const msg =
         error instanceof Error
