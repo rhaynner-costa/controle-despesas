@@ -105,4 +105,76 @@ export class ExpenseService {
     }
     await this.expenseRepository.softDelete(id, userId);
   }
+
+  public filterExpenses(
+    expenses: IExpenseWithCategoryDTO[],
+    rawQuery: string
+  ): IExpenseWithCategoryDTO[] {
+    const trimmed = rawQuery.trim();
+    if (!trimmed) {
+      return expenses;
+    }
+
+    const dayOnlyMatch = /^(?:dia\s*)?(\d{1,2})$/i.exec(trimmed);
+    if (dayOnlyMatch) {
+      const dayNumber = Number(dayOnlyMatch[1]);
+      if (dayNumber >= 1 && dayNumber <= 31) {
+        const targetDay = String(dayNumber).padStart(2, '0');
+        return expenses.filter((expense) => {
+          const [, , expenseDay] = expense.expenseDate.split('-');
+          return expenseDay === targetDay;
+        });
+      }
+    }
+
+    const dateMatch = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/.exec(trimmed);
+    if (dateMatch) {
+      const targetDay = String(Number(dateMatch[1])).padStart(2, '0');
+      const targetMonth = String(Number(dateMatch[2])).padStart(2, '0');
+      const targetYear = dateMatch[3] ?? null;
+
+      return expenses.filter((expense) => {
+        const [expYear, expMonth, expDay] = expense.expenseDate.split('-');
+        if (expDay !== targetDay || expMonth !== targetMonth) {
+          return false;
+        }
+        if (targetYear) {
+          return expYear.endsWith(targetYear);
+        }
+        return true;
+      });
+    }
+
+    const normalizedQuery = ExpenseService.normalizeSearchText(trimmed);
+
+    return expenses.filter((expense) => {
+      const descriptionMatch = ExpenseService.normalizeSearchText(
+        expense.description
+      ).includes(normalizedQuery);
+
+      const categoryMatch = ExpenseService.normalizeSearchText(
+        expense.categoryName
+      ).includes(normalizedQuery);
+
+      const notesMatch = expense.notes
+        ? ExpenseService.normalizeSearchText(expense.notes).includes(
+            normalizedQuery
+          )
+        : false;
+
+      const [year, month, day] = expense.expenseDate.split('-');
+      const formattedDate = `${day}/${month}/${year}`;
+      const dateTextMatch = formattedDate.includes(normalizedQuery);
+
+      return descriptionMatch || categoryMatch || notesMatch || dateTextMatch;
+    });
+  }
+
+  private static normalizeSearchText(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
 }

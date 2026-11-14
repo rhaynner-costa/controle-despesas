@@ -4,10 +4,10 @@ import {
   ActivityIndicator,
   Appbar,
   Card,
-  Divider,
   IconButton,
   List,
   ProgressBar,
+  Snackbar,
   Surface,
   Text,
   useTheme,
@@ -39,7 +39,9 @@ export const DashboardScreen: React.FC = () => {
   } = useAuth();
 
   const [loading, setLoading] = useState<boolean>(true);
+  const [exportingPdf, setExportingPdf] = useState<boolean>(false);
   const [summary, setSummary] = useState<IDashboardSummary | null>(null);
+  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
 
   const loadDashboard = useCallback(async (): Promise<void> => {
     if (!currentUser || !services) {
@@ -60,6 +62,29 @@ export const DashboardScreen: React.FC = () => {
   useEffect(() => {
     void loadDashboard();
   }, [loadDashboard, dataVersion]);
+
+  const handleExportPdf = async (): Promise<void> => {
+    if (!currentUser || !services || !summary || exportingPdf) {
+      return;
+    }
+    setExportingPdf(true);
+    try {
+      await services.dashboardService.exportMonthlySummaryToPdf(
+        summary,
+        formattedYearMonth,
+        currentUser.username
+      );
+      setSnackbarMessage('Relatório PDF gerado com sucesso.');
+    } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : 'Erro ao exportar resultados em PDF.';
+      setSnackbarMessage(msg);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   const renderCategoryItem = ({ item }: { item: ICategorySummaryItem }) => (
     <View style={styles.itemRow}>
@@ -107,6 +132,12 @@ export const DashboardScreen: React.FC = () => {
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header elevated>
         <Appbar.Content title="Resultados" />
+        <Appbar.Action
+          icon="file-pdf-box"
+          disabled={loading || exportingPdf || !summary}
+          onPress={handleExportPdf}
+          accessibilityLabel="Exportar resultados em PDF"
+        />
       </Appbar.Header>
 
       <Surface style={styles.monthSelectorBar} elevation={1}>
@@ -202,6 +233,14 @@ export const DashboardScreen: React.FC = () => {
           }
         />
       )}
+
+      <Snackbar
+        visible={Boolean(snackbarMessage)}
+        onDismiss={() => setSnackbarMessage(null)}
+        duration={3500}
+      >
+        {snackbarMessage ?? ''}
+      </Snackbar>
     </View>
   );
 };
