@@ -96,3 +96,15 @@
   - [x] Adicionar ação `file-pdf-box` no `Appbar.Header` de `DashboardScreen.tsx`.
 - [x] **4.4. Validação Estática:**
   - [x] Compilação TypeScript (`./node_modules/.bin/tsc --noEmit`) sem erros.
+
+---
+
+## Etapa 5: Automação Sob Demanda (GitHub Actions Manual para Geração do `.apk`)
+**Status:** ✅ Concluída
+
+- [x] **5.1. Compatibilidade Multiplataforma do Gradle (`android/app/build.gradle` e `.gitignore`):**
+  - [x] Resolver binário do Node dinamicamente (`/opt/homebrew/bin/node` no macOS local e `node` do `PATH` no Linux do GitHub Actions).
+  - [x] Versionar `android/app/debug.keystore` (`!android/app/debug.keystore` no `.gitignore`) para manter a mesma assinatura digital entre builds locais e da nuvem.
+- [x] **5.2. Workflow Manual (`.github/workflows/build-apk.yml`):**
+  - [x] Configurar gatilho exclusivamente manual (`on: workflow_dispatch`).
+  - [x] Configurar Node 22 LTS, OpenJDK 17, Android SDK, cache do Gradle, `npm run typecheck`, `./gradlew assembleRelease` e publicação do artefato `controle-despesas-apk`.
