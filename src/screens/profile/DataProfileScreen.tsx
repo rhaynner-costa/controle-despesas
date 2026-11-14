@@ -10,18 +10,50 @@ import {
   Portal,
   Snackbar,
   Surface,
+  Switch,
   Text,
   useTheme,
 } from 'react-native-paper';
+import packageJson from '../../../package.json';
 import { useAuth } from '../../context/AuthContext';
 
 export const DataProfileScreen: React.FC = () => {
   const theme = useTheme();
-  const { currentUser, services, logout, notifyDataChanged } = useAuth();
+  const {
+    currentUser,
+    services,
+    userBiometricEnabled,
+    toggleUserBiometrics,
+    logout,
+    notifyDataChanged,
+  } = useAuth();
 
   const [busy, setBusy] = useState<boolean>(false);
   const [clearStep, setClearStep] = useState<0 | 1 | 2>(0);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+
+  const handleToggleBiometrics = async (nextValue: boolean): Promise<void> => {
+    if (!currentUser || !services) {
+      return;
+    }
+    setBusy(true);
+    try {
+      await toggleUserBiometrics(nextValue);
+      setSnackbarMessage(
+        nextValue
+          ? 'Login com biometria habilitado para este usuário.'
+          : 'Login com biometria desabilitado para este usuário.'
+      );
+    } catch (error) {
+      const msg =
+        error instanceof Error
+          ? error.message
+          : 'Erro ao atualizar configuração de biometria.';
+      setSnackbarMessage(msg);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const handleExport = async (): Promise<void> => {
     if (!currentUser || !services) {
@@ -108,7 +140,7 @@ export const DataProfileScreen: React.FC = () => {
               variant="labelSmall"
               style={{ color: theme.colors.primary, marginTop: 4 }}
             >
-              Versão 1.1.0
+              Versão {packageJson.version}
             </Text>
           </View>
         </Surface>
@@ -168,6 +200,30 @@ export const DataProfileScreen: React.FC = () => {
 
         <List.Section>
           <List.Subheader>Sessão</List.Subheader>
+          <List.Item
+            title="Login com Biometria"
+            description="Habilitar autenticação biométrica do Android para este usuário"
+            left={(props) => <List.Icon {...props} icon="fingerprint" />}
+            right={() => (
+              <Switch
+                value={userBiometricEnabled}
+                onValueChange={(value) => {
+                  void handleToggleBiometrics(value);
+                }}
+                disabled={busy}
+              />
+            )}
+            onPress={() => {
+              void handleToggleBiometrics(!userBiometricEnabled);
+            }}
+            disabled={busy}
+          />
+          <Divider
+            style={[
+              styles.divider,
+              { backgroundColor: theme.colors.outlineVariant },
+            ]}
+          />
           <List.Item
             title="Sair (Logout)"
             description="Encerrar sessão atual neste dispositivo"

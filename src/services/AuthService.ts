@@ -36,6 +36,8 @@ export class AuthService {
     });
 
     await this.userRepository.create(newUser);
+    await this.userRepository.clearRememberedUser();
+    await this.userRepository.setBiometricEnabled(newUser.id, false);
     return newUser;
   }
 
@@ -81,10 +83,38 @@ export class AuthService {
     return isEnrolled;
   }
 
+  public async isUserBiometricEnabled(userId: string): Promise<boolean> {
+    return this.userRepository.isBiometricEnabled(userId);
+  }
+
+  public async setUserBiometricEnabled(
+    userId: string,
+    enabled: boolean
+  ): Promise<void> {
+    if (enabled) {
+      const biometricAvailable = await this.isBiometricAvailable();
+      if (!biometricAvailable) {
+        throw new Error(
+          'Biometria não configurada neste dispositivo Android.'
+        );
+      }
+    }
+    await this.userRepository.setBiometricEnabled(userId, enabled);
+  }
+
   public async loginWithBiometrics(): Promise<User | null> {
     const rememberedUser = await this.userRepository.getRememberedUser();
     if (!rememberedUser) {
       throw new Error('Nenhum usuário lembrado para autenticação biométrica.');
+    }
+
+    const userBiometricEnabled = await this.isUserBiometricEnabled(
+      rememberedUser.id
+    );
+    if (!userBiometricEnabled) {
+      throw new Error(
+        'O login por biometria não está habilitado para este usuário.'
+      );
     }
 
     const biometricAvailable = await this.isBiometricAvailable();

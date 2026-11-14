@@ -119,3 +119,18 @@
 - [x] Corrigir quebra de página do relatório PDF em `DashboardService.ts` (`@page` A4 com margens, remoção de `overflow: hidden` na lista e aplicação de `break-inside: avoid` / `page-break-inside: avoid` nas linhas de categoria).
 - [x] Corrigir compartilhamento por e-mail (Gmail/Outlook) mantendo o arquivo PDF/JSON em `FileSystem.documentDirectory` (`relatorio-despesas-MM-AAAA.pdf`) e preservando a sessão em segundo plano durante o uso do app externo de compartilhamento (`AuthContext.tsx`).
 - [x] Validar tipagem estática TypeScript (`./node_modules/.bin/tsc --noEmit`) sem erros.
+
+---
+
+## Etapa 7: Ajuste do Fluxo de Login e Biometria por Usuário
+**Status:** ✅ Concluída
+
+- [x] Persistir preferência de biometria por usuário (`biometric_enabled_<user_id>`) na tabela `app_settings` em `UserRepository.ts`.
+- [x] Validar preferência de biometria por usuário e disponibilidade de hardware Android em `AuthService.ts` (`isUserBiometricEnabled`, `setUserBiometricEnabled` e `loginWithBiometrics`).
+- [x] Expor `userBiometricEnabled` e `toggleUserBiometrics` no `AuthContext.tsx`.
+- [x] Ajustar `LoginScreen.tsx` para iniciar com campos limpos e checkbox `"Lembrar meu usuário"` desmarcado quando não há usuário lembrado, manter usuário preenchido sem chamar biometria quando a biometria não estiver ativa para o usuário, e acionar a biometria do Android apenas quando o usuário lembrado estiver com a biometria habilitada.
+- [x] Adicionar toggle (`Switch`) `"Login com Biometria"` na aba Dados e Perfil (`DataProfileScreen.tsx`).
+- [x] Configurar tempo de expiração de sessão em segundo plano para **1 minuto fixo** (`60_000 ms`) em `AuthContext.tsx` antes de exigir novo login.
+- [x] Atualizar versão do aplicativo para `1.2.0` (`versionCode 3`) e centralizar leitura dinâmica a partir do `package.json` em `DataProfileScreen.tsx` e `android/app/build.gradle`.
+- [x] Implementar card de **Indicadores Diários** (Média de gastos por dia sobre os dias do mês, Dia com menos gasto e Dia com mais gasto) e gráfico de linha do tempo **Evolução dos Gastos no Mês** (`LineChart`) em `DashboardService.ts` e `DashboardScreen.tsx` (incluindo exportação no PDF).
+- [x] Validar tipagem estática TypeScript (`./node_modules/.bin/tsc --noEmit`) sem erros.

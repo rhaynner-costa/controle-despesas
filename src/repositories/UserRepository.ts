@@ -15,6 +15,7 @@ interface ISettingRow {
 
 export class UserRepository {
   private static readonly REMEMBERED_USER_KEY = 'remembered_user_id';
+  private static readonly BIOMETRIC_USER_KEY_PREFIX = 'biometric_enabled_';
   private readonly db: SQLite.SQLiteDatabase;
 
   public constructor(db: SQLite.SQLiteDatabase) {
@@ -89,5 +90,26 @@ export class UserRepository {
       `DELETE FROM app_settings WHERE key = ?;`,
       [UserRepository.REMEMBERED_USER_KEY]
     );
+  }
+
+  public async setBiometricEnabled(
+    userId: string,
+    enabled: boolean
+  ): Promise<void> {
+    const key = `${UserRepository.BIOMETRIC_USER_KEY_PREFIX}${userId.trim()}`;
+    await this.db.runAsync(
+      `INSERT OR REPLACE INTO app_settings (key, value) VALUES (?, ?);`,
+      [key, enabled ? '1' : '0']
+    );
+  }
+
+  public async isBiometricEnabled(userId: string): Promise<boolean> {
+    const key = `${UserRepository.BIOMETRIC_USER_KEY_PREFIX}${userId.trim()}`;
+    const setting = await this.db.getFirstAsync<ISettingRow>(
+      `SELECT key, value FROM app_settings WHERE key = ? LIMIT 1;`,
+      [key]
+    );
+
+    return setting?.value === '1';
   }
 }

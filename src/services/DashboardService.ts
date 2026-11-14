@@ -1,6 +1,7 @@
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import packageJson from '../../package.json';
 import { IExpenseWithCategoryDTO } from '../models/Expense';
 import { ExpenseRepository } from '../repositories/ExpenseRepository';
 
@@ -19,9 +20,28 @@ export interface IPieChartSlice {
   categoryName: string;
 }
 
+export interface IDailyMetric {
+  date: string;
+  formattedDate: string;
+  shortDate: string;
+  totalAmount: number;
+}
+
+export interface ILineChartPoint {
+  value: number;
+  label: string;
+  date: string;
+  formattedDate: string;
+}
+
 export interface IDashboardSummary {
   yearMonth: string;
+  daysInMonth: number;
   totalMonthAmount: number;
+  dailyAverage: number;
+  minSpendingDay: IDailyMetric | null;
+  maxSpendingDay: IDailyMetric | null;
+  timelineChartData: ILineChartPoint[];
   categoriesSummary: ICategorySummaryItem[];
   pieChartData: IPieChartSlice[];
 }
@@ -55,22 +75,32 @@ export class DashboardService {
     yearMonth: string,
     expenses: IExpenseWithCategoryDTO[]
   ): IDashboardSummary {
+    const daysInMonth = DashboardService.getDaysInMonth(yearMonth);
     const totalRaw = expenses.reduce((sum, item) => sum + item.amount, 0);
     const totalMonthAmount = Math.round(totalRaw * 100) / 100;
 
     if (totalMonthAmount === 0) {
       return {
         yearMonth,
+        daysInMonth,
         totalMonthAmount: 0,
+        dailyAverage: 0,
+        minSpendingDay: null,
+        maxSpendingDay: null,
+        timelineChartData: [],
         categoriesSummary: [],
         pieChartData: [],
       };
     }
 
+    const dailyAverage =
+      Math.round((totalMonthAmount / daysInMonth) * 100) / 100;
+
     const grouped = new Map<
       string,
       { name: string; color: string; sum: number }
     >();
+    const dailyMap = new Map<string, number>();
 
     for (const expense of expenses) {
       const current = grouped.get(expense.categoryId);
@@ -85,7 +115,41 @@ export class DashboardService {
           sum: Math.round(expense.amount * 100) / 100,
         });
       }
+
+      const previousDaySum = dailyMap.get(expense.expenseDate) ?? 0;
+      dailyMap.set(
+        expense.expenseDate,
+        Math.round((previousDaySum + expense.amount) * 100) / 100
+      );
     }
+
+    const dailyMetrics: IDailyMetric[] = Array.from(dailyMap.entries())
+      .map(([date, sum]) => ({
+        date,
+        formattedDate: DashboardService.formatIsoDatePtBr(date),
+        shortDate: DashboardService.formatShortIsoDatePtBr(date),
+        totalAmount: sum,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    let minSpendingDay: IDailyMetric | null = null;
+    let maxSpendingDay: IDailyMetric | null = null;
+
+    for (const dayItem of dailyMetrics) {
+      if (!minSpendingDay || dayItem.totalAmount < minSpendingDay.totalAmount) {
+        minSpendingDay = dayItem;
+      }
+      if (!maxSpendingDay || dayItem.totalAmount > maxSpendingDay.totalAmount) {
+        maxSpendingDay = dayItem;
+      }
+    }
+
+    const timelineChartData: ILineChartPoint[] = dailyMetrics.map((dayItem) => ({
+      value: dayItem.totalAmount,
+      label: dayItem.shortDate,
+      date: dayItem.date,
+      formattedDate: dayItem.formattedDate,
+    }));
 
     const categoriesSummary: ICategorySummaryItem[] = Array.from(
       grouped.entries()
@@ -112,10 +176,41 @@ export class DashboardService {
 
     return {
       yearMonth,
+      daysInMonth,
       totalMonthAmount,
+      dailyAverage,
+      minSpendingDay,
+      maxSpendingDay,
+      timelineChartData,
       categoriesSummary,
       pieChartData,
     };
+  }
+
+  private static getDaysInMonth(yearMonth: string): number {
+    const [yearStr, monthStr] = yearMonth.split('-');
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    if (!year || !month) {
+      return 30;
+    }
+    return new Date(year, month, 0).getDate();
+  }
+
+  private static formatIsoDatePtBr(isoDate: string): string {
+    const [year, month, day] = isoDate.split('-');
+    if (!year || !month || !day) {
+      return isoDate;
+    }
+    return `${day}/${month}/${year}`;
+  }
+
+  private static formatShortIsoDatePtBr(isoDate: string): string {
+    const [, month, day] = isoDate.split('-');
+    if (!month || !day) {
+      return isoDate;
+    }
+    return `${day}/${month}`;
   }
 
   public async exportMonthlySummaryToPdf(
@@ -202,9 +297,64 @@ export class DashboardService {
       })
       .join('\n');
 
+    const metricsCardHtml =
+      summary.totalMonthAmount > 0
+        ? `
+      <div class="metrics-card">
+        <div class="metrics-title">Indicadores Diários (${summary.daysInMonth} dias no mês)</div>
+        <div class="metrics-grid">
+          <div class="metric-box">
+            <div class="metric-label">Média por Dia</div>
+            <div class="metric-value metric-primary">${DashboardService.formatCurrencyBRL(
+              summary.dailyAverage
+            )}</div>
+            <div class="metric-sub">Total / ${summary.daysInMonth} dias</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Dia com Menor Gasto</div>
+            <div class="metric-value metric-min">${
+              summary.minSpendingDay
+                ? DashboardService.formatCurrencyBRL(
+                    summary.minSpendingDay.totalAmount
+                  )
+                : 'R$ 0,00'
+            }</div>
+            <div class="metric-sub">${
+              summary.minSpendingDay
+                ? DashboardService.escapeHtml(
+                    summary.minSpendingDay.formattedDate
+                  )
+                : '-'
+            }</div>
+          </div>
+          <div class="metric-box">
+            <div class="metric-label">Dia com Maior Gasto</div>
+            <div class="metric-value metric-max">${
+              summary.maxSpendingDay
+                ? DashboardService.formatCurrencyBRL(
+                    summary.maxSpendingDay.totalAmount
+                  )
+                : 'R$ 0,00'
+            }</div>
+            <div class="metric-sub">${
+              summary.maxSpendingDay
+                ? DashboardService.escapeHtml(
+                    summary.maxSpendingDay.formattedDate
+                  )
+                : '-'
+            }</div>
+          </div>
+        </div>
+      </div>
+    `
+        : '';
+
+    const timelineSvgHtml = this.buildTimelineSvgHtml(summary.timelineChartData);
+
     const chartSectionHtml =
       summary.categoriesSummary.length > 0
         ? `
+      ${timelineSvgHtml}
       <div class="chart-card">
         <svg width="220" height="220" viewBox="0 0 220 220">
           <circle cx="110" cy="110" r="${radius}" fill="transparent" stroke="#EEEEEE" stroke-width="37" />
@@ -329,6 +479,67 @@ export class DashboardService {
       color: #1565C0;
       margin-top: 6px;
     }
+    .metrics-card {
+      background-color: #FFFFFF;
+      border: 1px solid #E0E0E0;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .metrics-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #1C1B1F;
+      margin-bottom: 12px;
+    }
+    .metrics-grid {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .metric-box {
+      flex: 1;
+      background-color: #F8F9FA;
+      border: 1px solid #EEEEEE;
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .metric-label {
+      font-size: 11px;
+      color: #49454F;
+      font-weight: 500;
+    }
+    .metric-value {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+    .metric-primary {
+      color: #1565C0;
+    }
+    .metric-min {
+      color: #2E7D32;
+    }
+    .metric-max {
+      color: #C62828;
+    }
+    .metric-sub {
+      font-size: 11px;
+      color: #666666;
+      margin-top: 2px;
+    }
+    .timeline-card {
+      background-color: #FFFFFF;
+      border: 1px solid #E0E0E0;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
     .chart-card {
       background-color: #FFFFFF;
       border: 1px solid #E0E0E0;
@@ -435,7 +646,9 @@ export class DashboardService {
   <div class="appbar">
     <div>
       <div class="appbar-title">Resultados</div>
-      <div class="appbar-subtitle">Controle de Despesas v1.1.0 • Usuário: ${DashboardService.escapeHtml(
+      <div class="appbar-subtitle">Controle de Despesas v${DashboardService.escapeHtml(
+        packageJson.version
+      )} • Usuário: ${DashboardService.escapeHtml(
         username
       )}</div>
     </div>
@@ -453,6 +666,8 @@ export class DashboardService {
     )}</div>
   </div>
 
+  ${metricsCardHtml}
+
   ${chartSectionHtml}
 
   ${
@@ -462,6 +677,78 @@ export class DashboardService {
   }
 </body>
 </html>`;
+  }
+
+  private buildTimelineSvgHtml(points: ILineChartPoint[]): string {
+    if (points.length === 0) {
+      return '';
+    }
+
+    const svgWidth = 520;
+    const svgHeight = 160;
+    const padLeft = 48;
+    const padRight = 24;
+    const padTop = 24;
+    const padBottom = 32;
+    const plotWidth = svgWidth - padLeft - padRight;
+    const plotHeight = svgHeight - padTop - padBottom;
+
+    const maxValue = Math.max(...points.map((p) => p.value), 1);
+
+    const coords = points.map((point, index) => {
+      const x =
+        points.length === 1
+          ? padLeft + plotWidth / 2
+          : padLeft + (index / (points.length - 1)) * plotWidth;
+      const y = padTop + plotHeight - (point.value / maxValue) * plotHeight;
+      return { x, y, point };
+    });
+
+    const polylinePoints = coords
+      .map((c) => `${c.x.toFixed(1)},${c.y.toFixed(1)}`)
+      .join(' ');
+
+    const areaPoints =
+      coords.length > 1
+        ? `${coords[0].x.toFixed(1)},${(padTop + plotHeight).toFixed(1)} ${polylinePoints} ${coords[
+            coords.length - 1
+          ].x.toFixed(1)},${(padTop + plotHeight).toFixed(1)}`
+        : '';
+
+    const circlesAndLabels = coords
+      .map(
+        (c) => `
+        <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="4" fill="#1565C0" />
+        <text x="${c.x.toFixed(1)}" y="${(padTop + plotHeight + 18).toFixed(
+          1
+        )}" text-anchor="middle" fill="#49454F" font-size="10" font-family="sans-serif">${DashboardService.escapeHtml(
+          c.point.label
+        )}</text>
+      `
+      )
+      .join('\n');
+
+    return `
+      <div class="timeline-card">
+        <div class="metrics-title">Evolução dos Gastos no Mês</div>
+        <svg width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}">
+          <line x1="${padLeft}" y1="${padTop + plotHeight}" x2="${
+      svgWidth - padRight
+    }" y2="${padTop + plotHeight}" stroke="#E0E0E0" stroke-width="1" />
+          ${
+            areaPoints
+              ? `<polygon points="${areaPoints}" fill="rgba(21, 101, 192, 0.12)" />`
+              : ''
+          }
+          ${
+            coords.length > 1
+              ? `<polyline fill="none" stroke="#1565C0" stroke-width="2.5" points="${polylinePoints}" />`
+              : ''
+          }
+          ${circlesAndLabels}
+        </svg>
+      </div>
+    `;
   }
 
   private static formatCurrencyBRL(value: number): string {
