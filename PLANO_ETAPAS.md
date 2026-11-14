@@ -117,4 +117,5 @@
 - [x] Criar branch `feat/melhoria-nome-backup`.
 - [x] Padronizar nome do arquivo exportado em `BackupService.ts` para `backup-despesas-DD-MM-AAAA-HH-MM.json` utilizando o horário local do dispositivo.
 - [x] Corrigir quebra de página do relatório PDF em `DashboardService.ts` (`@page` A4 com margens, remoção de `overflow: hidden` na lista e aplicação de `break-inside: avoid` / `page-break-inside: avoid` nas linhas de categoria).
+- [x] Corrigir compartilhamento por e-mail (Gmail/Outlook) mantendo o arquivo PDF/JSON em `FileSystem.documentDirectory` (`relatorio-despesas-MM-AAAA.pdf`) e preservando a sessão em segundo plano durante o uso do app externo de compartilhamento (`AuthContext.tsx`).
 - [x] Validar tipagem estática TypeScript (`./node_modules/.bin/tsc --noEmit`) sem erros.

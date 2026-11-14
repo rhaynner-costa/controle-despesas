@@ -79,13 +79,13 @@ export class BackupService {
       })),
     };
 
-    const cacheDir = FileSystem.cacheDirectory;
-    if (!cacheDir) {
-      throw new Error('Diretório temporário do sistema indisponível.');
+    const targetDir = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
+    if (!targetDir) {
+      throw new Error('Diretório de armazenamento do sistema indisponível.');
     }
 
     const timestamp = this.formatBackupTimestamp(new Date());
-    const fileUri = `${cacheDir}backup-despesas-${timestamp}.json`;
+    const fileUri = `${targetDir}backup-despesas-${timestamp}.json`;
 
     await FileSystem.writeAsStringAsync(
       fileUri,

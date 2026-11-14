@@ -137,9 +137,16 @@ export class DashboardService {
     });
 
     let shareUri = generatedUri;
-    const cacheDir = FileSystem.cacheDirectory;
-    if (cacheDir) {
-      const customUri = `${cacheDir}resultados-${summary.yearMonth}.pdf`;
+    const targetDir = FileSystem.documentDirectory ?? FileSystem.cacheDirectory;
+    if (targetDir) {
+      const [yearStr, monthStr] = summary.yearMonth.split('-');
+      const fileMonthYear =
+        yearStr && monthStr ? `${monthStr}-${yearStr}` : summary.yearMonth;
+      const customUri = `${targetDir}relatorio-despesas-${fileMonthYear}.pdf`;
+      const existingInfo = await FileSystem.getInfoAsync(customUri);
+      if (existingInfo.exists) {
+        await FileSystem.deleteAsync(customUri, { idempotent: true });
+      }
       await FileSystem.copyAsync({
         from: generatedUri,
         to: customUri,
