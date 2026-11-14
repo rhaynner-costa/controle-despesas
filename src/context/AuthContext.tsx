@@ -33,6 +33,7 @@ export interface IAuthContextData {
   currentUser: User | null;
   rememberedUser: User | null;
   biometricAvailable: boolean;
+  userBiometricEnabled: boolean;
   selectedYearMonth: string;
   formattedYearMonth: string;
   dataVersion: number;
@@ -43,6 +44,7 @@ export interface IAuthContextData {
     rememberUser?: boolean
   ) => Promise<void>;
   loginWithBiometrics: () => Promise<boolean>;
+  toggleUserBiometrics: (enabled: boolean) => Promise<void>;
   register: (username: string, password: string) => Promise<void>;
   logout: () => void;
   previousMonth: () => void;
@@ -89,6 +91,8 @@ function formatYearMonthPt(yearMonth: string): string {
   return `${monthName} de ${yearStr}`;
 }
 
+const BACKGROUND_SESSION_TIMEOUT_MS = 60 * 1000;
+
 const AuthContext = createContext<IAuthContextData | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -100,18 +104,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [rememberedUser, setRememberedUser] = useState<User | null>(null);
   const [biometricAvailable, setBiometricAvailable] = useState<boolean>(false);
+  const [userBiometricEnabled, setUserBiometricEnabled] =
+    useState<boolean>(false);
   const [selectedYearMonth, setSelectedYearMonth] = useState<string>(
     getCurrentYearMonth()
   );
   const [dataVersion, setDataVersion] = useState<number>(0);
   const isSystemDialogOpenRef = useRef<boolean>(false);
   const preserveSessionInBackgroundRef = useRef<boolean>(false);
+  const backgroundedAtRef = useRef<number | null>(null);
+  const backgroundTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
       'change',
       (nextAppState: AppStateStatus) => {
         if (nextAppState === 'active') {
+          if (backgroundTimerRef.current) {
+            clearTimeout(backgroundTimerRef.current);
+            backgroundTimerRef.current = null;
+          }
+          if (backgroundedAtRef.current !== null) {
+            const elapsedMs = Date.now() - backgroundedAtRef.current;
+            backgroundedAtRef.current = null;
+            if (elapsedMs >= BACKGROUND_SESSION_TIMEOUT_MS) {
+              setCurrentUser(null);
+            }
+          }
           if (!isSystemDialogOpenRef.current) {
             preserveSessionInBackgroundRef.current = false;
           }
@@ -122,13 +141,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           !isSystemDialogOpenRef.current &&
           !preserveSessionInBackgroundRef.current
         ) {
-          setCurrentUser(null);
+          if (backgroundedAtRef.current === null) {
+            backgroundedAtRef.current = Date.now();
+          }
+          if (backgroundTimerRef.current) {
+            clearTimeout(backgroundTimerRef.current);
+          }
+          backgroundTimerRef.current = setTimeout(() => {
+            backgroundTimerRef.current = null;
+            backgroundedAtRef.current = null;
+            setCurrentUser(null);
+          }, BACKGROUND_SESSION_TIMEOUT_MS);
         }
       }
     );
 
     return () => {
       subscription.remove();
+      if (backgroundTimerRef.current) {
+        clearTimeout(backgroundTimerRef.current);
+        backgroundTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -178,11 +211,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           authService.getRememberedUser(),
           authService.isBiometricAvailable(),
         ]);
+        const savedUserBiometric = savedUser
+          ? await authService.isUserBiometricEnabled(savedUser.id)
+          : false;
 
         if (isMounted) {
           setServices(appServices);
           setRememberedUser(savedUser);
           setBiometricAvailable(hasBiometrics);
+          setUserBiometricEnabled(savedUserBiometric);
           setIsReady(true);
         }
       } catch (error) {
@@ -222,9 +259,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password,
         rememberUser
       );
-      const hasBiometrics = await services.authService.isBiometricAvailable();
+      const [hasBiometrics, isBiometricEnabledForUser] = await Promise.all([
+        services.authService.isBiometricAvailable(),
+        services.authService.isUserBiometricEnabled(authenticatedUser.id),
+      ]);
       setRememberedUser(rememberUser ? authenticatedUser : null);
       setBiometricAvailable(hasBiometrics);
+      setUserBiometricEnabled(isBiometricEnabledForUser);
       setCurrentUser(authenticatedUser);
       setSelectedYearMonth(getCurrentYearMonth());
     },
@@ -241,6 +282,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!authenticatedUser) {
         return false;
       }
+      setUserBiometricEnabled(true);
       setCurrentUser(authenticatedUser);
       setSelectedYearMonth(getCurrentYearMonth());
       return true;
@@ -249,12 +291,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [services]);
 
+  const toggleUserBiometrics = useCallback(
+    async (enabled: boolean): Promise<void> => {
+      if (!services || !currentUser) {
+        throw new Error('Usuário não autenticado.');
+      }
+      await services.authService.setUserBiometricEnabled(
+        currentUser.id,
+        enabled
+      );
+      const hasBiometrics = await services.authService.isBiometricAvailable();
+      setBiometricAvailable(hasBiometrics);
+      setUserBiometricEnabled(enabled);
+    },
+    [services, currentUser]
+  );
+
   const register = useCallback(
     async (username: string, password: string): Promise<void> => {
       if (!services) {
         throw new Error('Serviços do banco de dados ainda não estão prontos.');
       }
       const newUser = await services.authService.register(username, password);
+      setRememberedUser(null);
+      setUserBiometricEnabled(false);
       setCurrentUser(newUser);
       setSelectedYearMonth(getCurrentYearMonth());
     },
@@ -285,12 +345,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       currentUser,
       rememberedUser,
       biometricAvailable,
+      userBiometricEnabled,
       selectedYearMonth,
       formattedYearMonth,
       dataVersion,
       services,
       login,
       loginWithBiometrics,
+      toggleUserBiometrics,
       register,
       logout,
       previousMonth,
@@ -303,12 +365,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       currentUser,
       rememberedUser,
       biometricAvailable,
+      userBiometricEnabled,
       selectedYearMonth,
       formattedYearMonth,
       dataVersion,
       services,
       login,
       loginWithBiometrics,
+      toggleUserBiometrics,
       register,
       logout,
       previousMonth,

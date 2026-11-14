@@ -29,24 +29,38 @@ type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const theme = useTheme();
-  const { login, loginWithBiometrics, rememberedUser, biometricAvailable } =
-    useAuth();
+  const {
+    login,
+    loginWithBiometrics,
+    rememberedUser,
+    biometricAvailable,
+    userBiometricEnabled,
+  } = useAuth();
 
   const [username, setUsername] = useState<string>(
     rememberedUser ? rememberedUser.username : ''
   );
   const [password, setPassword] = useState<string>('');
-  const [rememberUser, setRememberUser] = useState<boolean>(true);
+  const [rememberUser, setRememberUser] = useState<boolean>(
+    Boolean(rememberedUser)
+  );
   const [secureText, setSecureText] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const promptingRef = useRef<boolean>(false);
   const lastPromptClosedAtRef = useRef<number>(0);
 
+  const canUseBiometrics = Boolean(
+    rememberedUser && userBiometricEnabled && biometricAvailable
+  );
+
   useEffect(() => {
     if (rememberedUser) {
       setUsername(rememberedUser.username);
       setRememberUser(true);
+    } else {
+      setUsername('');
+      setRememberUser(false);
     }
   }, [rememberedUser]);
 
@@ -74,7 +88,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   }, [loginWithBiometrics]);
 
   useEffect(() => {
-    if (!rememberedUser || !biometricAvailable) {
+    if (!canUseBiometrics) {
       return;
     }
 
@@ -91,10 +105,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         clearTimeout(timeoutId);
       }
     };
-  }, [rememberedUser, biometricAvailable, handleBiometricLogin]);
+  }, [canUseBiometrics, handleBiometricLogin]);
 
   useEffect(() => {
-    if (!rememberedUser || !biometricAvailable) {
+    if (!canUseBiometrics) {
       return;
     }
 
@@ -129,7 +143,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         clearTimeout(timeoutId);
       }
     };
-  }, [rememberedUser, biometricAvailable, handleBiometricLogin]);
+  }, [canUseBiometrics, handleBiometricLogin]);
 
   const handleLogin = async (): Promise<void> => {
     Keyboard.dismiss();
@@ -145,8 +159,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       setSubmitting(false);
     }
   };
-
-  const canUseBiometrics = Boolean(rememberedUser && biometricAvailable);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
