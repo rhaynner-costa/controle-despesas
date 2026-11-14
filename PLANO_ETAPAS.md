@@ -132,4 +132,5 @@
 - [x] Adicionar toggle (`Switch`) `"Login com Biometria"` na aba Dados e Perfil (`DataProfileScreen.tsx`).
 - [x] Configurar tempo de expiração de sessão em segundo plano para **1 minuto fixo** (`60_000 ms`) em `AuthContext.tsx` antes de exigir novo login.
 - [x] Atualizar versão do aplicativo para `1.2.0` (`versionCode 3`) e centralizar leitura dinâmica a partir do `package.json` em `DataProfileScreen.tsx` e `android/app/build.gradle`.
+- [x] Implementar card de **Indicadores Diários** (Média de gastos por dia sobre os dias do mês, Dia com menos gasto e Dia com mais gasto) e gráfico de linha do tempo **Evolução dos Gastos no Mês** (`LineChart`) em `DashboardService.ts` e `DashboardScreen.tsx` (incluindo exportação no PDF).
 - [x] Validar tipagem estática TypeScript (`./node_modules/.bin/tsc --noEmit`) sem erros.

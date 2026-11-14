@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Appbar,
   Card,
+  Divider,
   IconButton,
   List,
   ProgressBar,
@@ -12,7 +13,7 @@ import {
   Text,
   useTheme,
 } from 'react-native-paper';
-import { PieChart } from 'react-native-gifted-charts';
+import { LineChart, PieChart } from 'react-native-gifted-charts';
 import { useAuth } from '../../context/AuthContext';
 import {
   ICategorySummaryItem,
@@ -188,6 +189,133 @@ export const DashboardScreen: React.FC = () => {
                 </Card.Content>
               </Card>
 
+              {summary && summary.totalMonthAmount > 0 && (
+                <Card mode="elevated" style={styles.metricsCard}>
+                  <Card.Content>
+                    <Text variant="titleSmall" style={styles.metricsCardTitle}>
+                      Indicadores Diários ({summary.daysInMonth} dias no mês)
+                    </Text>
+
+                    <View style={styles.metricRow}>
+                      <View style={styles.metricInfo}>
+                        <Text variant="bodyMedium" style={styles.boldText}>
+                          Média de gastos por dia
+                        </Text>
+                        <Text
+                          variant="bodySmall"
+                          style={{ color: theme.colors.onSurfaceVariant }}
+                        >
+                          Total dividido por {summary.daysInMonth} dias
+                        </Text>
+                      </View>
+                      <Text
+                        variant="titleSmall"
+                        style={[styles.boldText, { color: theme.colors.primary }]}
+                      >
+                        {formatCurrencyBRL(summary.dailyAverage)}
+                      </Text>
+                    </View>
+
+                    <Divider style={styles.metricDivider} />
+
+                    <View style={styles.metricRow}>
+                      <View style={styles.metricInfo}>
+                        <Text variant="bodyMedium" style={styles.boldText}>
+                          Dia com menos gasto
+                        </Text>
+                        <Text
+                          variant="bodySmall"
+                          style={{ color: theme.colors.onSurfaceVariant }}
+                        >
+                          {summary.minSpendingDay
+                            ? `Dia ${summary.minSpendingDay.formattedDate}`
+                            : '-'}
+                        </Text>
+                      </View>
+                      <Text
+                        variant="titleSmall"
+                        style={[styles.boldText, styles.minAmountColor]}
+                      >
+                        {summary.minSpendingDay
+                          ? formatCurrencyBRL(summary.minSpendingDay.totalAmount)
+                          : 'R$ 0,00'}
+                      </Text>
+                    </View>
+
+                    <Divider style={styles.metricDivider} />
+
+                    <View style={styles.metricRow}>
+                      <View style={styles.metricInfo}>
+                        <Text variant="bodyMedium" style={styles.boldText}>
+                          Dia com mais gasto
+                        </Text>
+                        <Text
+                          variant="bodySmall"
+                          style={{ color: theme.colors.onSurfaceVariant }}
+                        >
+                          {summary.maxSpendingDay
+                            ? `Dia ${summary.maxSpendingDay.formattedDate}`
+                            : '-'}
+                        </Text>
+                      </View>
+                      <Text
+                        variant="titleSmall"
+                        style={[styles.boldText, { color: theme.colors.error }]}
+                      >
+                        {summary.maxSpendingDay
+                          ? formatCurrencyBRL(summary.maxSpendingDay.totalAmount)
+                          : 'R$ 0,00'}
+                      </Text>
+                    </View>
+                  </Card.Content>
+                </Card>
+              )}
+
+              {summary && summary.timelineChartData.length > 0 && (
+                <Surface style={styles.timelineCard} elevation={1}>
+                  <Text variant="titleSmall" style={styles.timelineTitle}>
+                    Evolução dos Gastos no Mês
+                  </Text>
+                  <LineChart
+                    data={summary.timelineChartData.map((pt) => ({
+                      value: pt.value,
+                      label: pt.label,
+                      dataPointText: formatCurrencyBRL(pt.value),
+                    }))}
+                    areaChart
+                    color={theme.colors.primary}
+                    startFillColor={theme.colors.primary}
+                    endFillColor={theme.colors.surface}
+                    startOpacity={0.25}
+                    endOpacity={0.03}
+                    thickness={2.5}
+                    dataPointsColor={theme.colors.primary}
+                    dataPointsRadius={4}
+                    textColor={theme.colors.onSurface}
+                    textFontSize={9}
+                    textShiftY={-8}
+                    textShiftX={-10}
+                    height={150}
+                    noOfSections={4}
+                    spacing={64}
+                    initialSpacing={24}
+                    endSpacing={28}
+                    yAxisTextStyle={{
+                      color: theme.colors.onSurfaceVariant,
+                      fontSize: 10,
+                    }}
+                    xAxisLabelTextStyle={{
+                      color: theme.colors.onSurfaceVariant,
+                      fontSize: 10,
+                    }}
+                    yAxisColor={theme.colors.outlineVariant}
+                    xAxisColor={theme.colors.outlineVariant}
+                    rulesColor={theme.colors.outlineVariant}
+                    isAnimated={false}
+                  />
+                </Surface>
+              )}
+
               {summary && summary.pieChartData.length > 0 ? (
                 <Surface style={styles.chartContainer} elevation={1}>
                   <PieChart
@@ -280,6 +408,42 @@ const styles = StyleSheet.create({
   totalValue: {
     fontWeight: 'bold',
     marginTop: 4,
+  },
+  metricsCard: {
+    marginBottom: 16,
+    borderRadius: 16,
+  },
+  metricsCardTitle: {
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  metricRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
+  metricInfo: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  metricDivider: {
+    marginVertical: 4,
+  },
+  minAmountColor: {
+    color: '#2E7D32',
+  },
+  timelineCard: {
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  timelineTitle: {
+    fontWeight: 'bold',
+    marginBottom: 12,
+    paddingHorizontal: 4,
   },
   chartContainer: {
     alignItems: 'center',
