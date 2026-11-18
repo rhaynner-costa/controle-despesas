@@ -188,6 +188,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             </Text>
 
             <TextInput
+              testID="login-input-username"
               mode="outlined"
               label="Usuário"
               value={username}
@@ -200,6 +201,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             />
 
             <TextInput
+              testID="login-input-password"
               mode="outlined"
               label="Senha"
               value={password}
@@ -209,6 +211,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               left={<TextInput.Icon icon="lock-outline" />}
               right={
                 <TextInput.Icon
+                  testID="login-btn-toggle-password"
                   icon={secureText ? 'eye-outline' : 'eye-off-outline'}
                   onPress={() => setSecureText((prev) => !prev)}
                 />
@@ -218,6 +221,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             />
 
             <Pressable
+              testID="login-pressable-remember-user"
               style={styles.rememberRow}
               onPress={() => setRememberUser((prev) => !prev)}
               disabled={submitting}
@@ -232,11 +236,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
               </Text>
             </Pressable>
 
-            <HelperText type="info" visible>
+            <HelperText testID="login-status-offline-info" type="info" visible>
               Seus dados permanecem armazenados 100% no seu dispositivo.
             </HelperText>
 
             <Button
+              testID="login-btn-submit"
               mode="contained"
               onPress={handleLogin}
               loading={submitting}
@@ -249,6 +254,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
 
             {canUseBiometrics && (
               <Button
+                testID="login-btn-biometric"
                 mode="outlined"
                 icon="fingerprint"
                 onPress={handleBiometricLogin}
@@ -261,6 +267,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             )}
 
             <Button
+              testID="login-btn-go-register"
               mode="text"
               onPress={() => navigation.navigate('Register')}
               disabled={submitting}
@@ -273,6 +280,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
       </KeyboardAvoidingView>
 
       <Snackbar
+        testID="login-snackbar-error"
         visible={Boolean(errorMessage)}
         onDismiss={() => setErrorMessage(null)}
         duration={4000}

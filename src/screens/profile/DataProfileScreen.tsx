@@ -127,7 +127,11 @@ export const DataProfileScreen: React.FC = () => {
         <Surface style={styles.userCard} elevation={1}>
           <Avatar.Icon size={48} icon="account" />
           <View style={styles.userInfo}>
-            <Text variant="titleMedium" style={styles.boldText}>
+            <Text
+              testID="profile-text-username"
+              variant="titleMedium"
+              style={styles.boldText}
+            >
               {currentUser?.username}
             </Text>
             <Text
@@ -137,6 +141,7 @@ export const DataProfileScreen: React.FC = () => {
               UUID: {currentUser?.id}
             </Text>
             <Text
+              testID="profile-text-version"
               variant="labelSmall"
               style={{ color: theme.colors.primary, marginTop: 4 }}
             >
@@ -149,6 +154,7 @@ export const DataProfileScreen: React.FC = () => {
           <List.Subheader>Manutenção de Dados (Offline-First)</List.Subheader>
 
           <List.Item
+            testID="profile-item-export-backup"
             title="Exportar Backup (JSON)"
             description="Gera arquivo .json das suas categorias e despesas e abre o compartilhamento do Android"
             left={(props) => <List.Icon {...props} icon="export-variant" />}
@@ -163,6 +169,7 @@ export const DataProfileScreen: React.FC = () => {
           />
 
           <List.Item
+            testID="profile-item-import-backup"
             title="Importar Backup (JSON)"
             description="Lê arquivo .json do aparelho usando INSERT OR IGNORE (sem duplicar UUIDs)"
             left={(props) => <List.Icon {...props} icon="import" />}
@@ -177,6 +184,7 @@ export const DataProfileScreen: React.FC = () => {
           />
 
           <List.Item
+            testID="profile-item-clear-data"
             title="Limpar Dados"
             titleStyle={{ color: theme.colors.error }}
             description="Remove todas as categorias e despesas vinculadas ao seu usuário"
@@ -201,11 +209,13 @@ export const DataProfileScreen: React.FC = () => {
         <List.Section>
           <List.Subheader>Sessão</List.Subheader>
           <List.Item
+            testID="profile-item-biometrics"
             title="Login com Biometria"
             description="Habilitar autenticação biométrica do Android para este usuário"
             left={(props) => <List.Icon {...props} icon="fingerprint" />}
             right={() => (
               <Switch
+                testID="profile-switch-biometrics"
                 value={userBiometricEnabled}
                 onValueChange={(value) => {
                   void handleToggleBiometrics(value);
@@ -225,6 +235,7 @@ export const DataProfileScreen: React.FC = () => {
             ]}
           />
           <List.Item
+            testID="profile-item-logout"
             title="Sair (Logout)"
             description="Encerrar sessão atual neste dispositivo"
             left={(props) => <List.Icon {...props} icon="logout" />}
@@ -242,6 +253,7 @@ export const DataProfileScreen: React.FC = () => {
 
       <Portal>
         <Dialog
+          testID="profile-dialog-clear-step-1"
           visible={clearStep === 1}
           dismissable={false}
           dismissableBackButton={false}
@@ -254,10 +266,15 @@ export const DataProfileScreen: React.FC = () => {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setClearStep(0)} disabled={busy}>
+            <Button
+              testID="profile-btn-clear-cancel-1"
+              onPress={() => setClearStep(0)}
+              disabled={busy}
+            >
               Cancelar
             </Button>
             <Button
+              testID="profile-btn-clear-continue-1"
               mode="contained"
               onPress={() => setClearStep(2)}
               disabled={busy}
@@ -268,6 +285,7 @@ export const DataProfileScreen: React.FC = () => {
         </Dialog>
 
         <Dialog
+          testID="profile-dialog-clear-step-2"
           visible={clearStep === 2}
           dismissable={false}
           dismissableBackButton={false}
@@ -280,10 +298,15 @@ export const DataProfileScreen: React.FC = () => {
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <Button onPress={() => setClearStep(0)} disabled={busy}>
+            <Button
+              testID="profile-btn-clear-cancel-2"
+              onPress={() => setClearStep(0)}
+              disabled={busy}
+            >
               Cancelar
             </Button>
             <Button
+              testID="profile-btn-clear-confirm-2"
               mode="contained"
               buttonColor={theme.colors.error}
               textColor={theme.colors.onError}
@@ -298,6 +321,7 @@ export const DataProfileScreen: React.FC = () => {
       </Portal>
 
       <Snackbar
+        testID="profile-snackbar-feedback"
         visible={Boolean(snackbarMessage)}
         onDismiss={() => setSnackbarMessage(null)}
         duration={4000}

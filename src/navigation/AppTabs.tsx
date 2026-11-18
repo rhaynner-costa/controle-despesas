@@ -44,6 +44,7 @@ export const AppTabs: React.FC = () => {
         component={DashboardScreen}
         options={{
           title: 'Resultados',
+          tabBarButtonTestID: 'tab-btn-dashboard',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="chart-donut"
@@ -58,6 +59,7 @@ export const AppTabs: React.FC = () => {
         component={ExpenseListScreen}
         options={{
           title: 'Despesas',
+          tabBarButtonTestID: 'tab-btn-expenses',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="format-list-bulleted"
@@ -72,6 +74,7 @@ export const AppTabs: React.FC = () => {
         component={CategoryScreen}
         options={{
           title: 'Categorias',
+          tabBarButtonTestID: 'tab-btn-categories',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="tag-multiple-outline"
@@ -86,6 +89,7 @@ export const AppTabs: React.FC = () => {
         component={DataProfileScreen}
         options={{
           title: 'Dados/Perfil',
+          tabBarButtonTestID: 'tab-btn-profile',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons
               name="database-cog-outline"

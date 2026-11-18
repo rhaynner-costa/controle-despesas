@@ -122,15 +122,21 @@ export const ExpenseListScreen: React.FC = () => {
 
       <Surface style={styles.monthSelectorBar} elevation={1}>
         <IconButton
+          testID="expenses-btn-prev-month"
           icon="chevron-left"
           size={26}
           onPress={previousMonth}
           accessibilityLabel="Mês anterior"
         />
-        <Text variant="titleMedium" style={styles.monthTitle}>
+        <Text
+          testID="expenses-text-current-month"
+          variant="titleMedium"
+          style={styles.monthTitle}
+        >
           {formattedYearMonth}
         </Text>
         <IconButton
+          testID="expenses-btn-next-month"
           icon="chevron-right"
           size={26}
           onPress={nextMonth}
@@ -140,6 +146,7 @@ export const ExpenseListScreen: React.FC = () => {
 
       <View style={styles.searchContainer}>
         <Searchbar
+          testID="expenses-input-search"
           placeholder="Buscar descrição, categoria ou dia (ex: 15)"
           onChangeText={setSearchQuery}
           value={searchQuery}
@@ -157,6 +164,7 @@ export const ExpenseListScreen: React.FC = () => {
         </View>
       ) : (
         <FlatList
+          testID="expenses-list-items"
           data={filteredExpenses}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator
@@ -170,6 +178,7 @@ export const ExpenseListScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyView}>
               <Text
+                testID="expenses-text-empty"
                 variant="bodyLarge"
                 style={[
                   styles.emptyText,
@@ -193,6 +202,7 @@ export const ExpenseListScreen: React.FC = () => {
             return (
               <View style={styles.itemRow}>
                 <List.Item
+                  testID={`expenses-item-${item.id}`}
                   title={item.description}
                   description={subtitleLines}
                   descriptionNumberOfLines={3}
@@ -215,12 +225,14 @@ export const ExpenseListScreen: React.FC = () => {
                         {formatCurrencyBRL(item.amount)}
                       </Text>
                       <IconButton
+                        testID={`expenses-btn-edit-${item.id}`}
                         icon="pencil-outline"
                         size={20}
                         onPress={() => openEditModal(item)}
                         accessibilityLabel={`Editar despesa ${item.description}`}
                       />
                       <IconButton
+                        testID={`expenses-btn-delete-${item.id}`}
                         icon="delete-outline"
                         iconColor={theme.colors.error}
                         size={20}
@@ -237,6 +249,7 @@ export const ExpenseListScreen: React.FC = () => {
       )}
 
       <FAB
+        testID="expenses-fab-new"
         icon="plus"
         label="Nova Despesa"
         style={styles.fab}
@@ -261,6 +274,7 @@ export const ExpenseListScreen: React.FC = () => {
 
       <Portal>
         <Dialog
+          testID="expenses-dialog-delete"
           visible={Boolean(expenseToDelete)}
           dismissable={false}
           dismissableBackButton={false}
@@ -283,12 +297,14 @@ export const ExpenseListScreen: React.FC = () => {
           </Dialog.Content>
           <Dialog.Actions>
             <Button
+              testID="expenses-btn-cancel-delete"
               onPress={() => setExpenseToDelete(null)}
               disabled={deleting}
             >
               Cancelar
             </Button>
             <Button
+              testID="expenses-btn-confirm-delete"
               mode="contained"
               buttonColor={theme.colors.error}
               textColor={theme.colors.onError}
@@ -303,6 +319,7 @@ export const ExpenseListScreen: React.FC = () => {
       </Portal>
 
       <Snackbar
+        testID="expenses-snackbar-feedback"
         visible={Boolean(snackbarMessage)}
         onDismiss={() => setSnackbarMessage(null)}
         duration={3500}

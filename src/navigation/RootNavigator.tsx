@@ -13,6 +13,7 @@ export const RootNavigator: React.FC = () => {
   if (!isReady) {
     return (
       <View
+        testID="root-status-loading"
         style={[
           styles.centered,
           { backgroundColor: theme.colors.background },
@@ -40,7 +41,9 @@ export const RootNavigator: React.FC = () => {
         >
           Erro ao inicializar SQLite
         </Text>
-        <Text variant="bodyMedium">{initError}</Text>
+        <Text testID="root-status-init-error" variant="bodyMedium">
+          {initError}
+        </Text>
       </View>
     );
   }

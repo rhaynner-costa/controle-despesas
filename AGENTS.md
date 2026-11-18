@@ -7,11 +7,14 @@
   * Separe claramente as responsabilidades: **Domain/Models** (regras e validações), **Repositories** (SQLite), **Services** (casos de uso e cálculos) e **UI/Screens** (apenas apresentação).
   * Mantenha o equilíbrio: aplique princípios SOLID onde agregarem clareza, mas **sem excesso de engenharia (KISS / YAGNI)** — evite fábricas abstratas desnecessárias ou hierarquias profundas.
 * **Sem Fallbacks Desnecessários:** Implemente exatamente a stack e os fluxos definidos. Não crie lógicas alternativas silenciosas ou camadas de compatibilidade não solicitadas. Se algo falhar, lance/retorne o erro real de forma explícita.
+* **Regras de Desenvolvimento e Preservação de Código:**
+  * Se não conseguir ou não souber resolver, pare e avise o usuário. Não mexa no que já funciona só para uma parte rodar.
+  * Mude só o necessário para a tarefa. Quer refatorar algo? Pergunte antes.
+  * Siga as pastas, os nomes e as bibliotecas que o projeto já usa. Só instale novas dependências após autorização explícita do usuário.
 * **Fluxo de Aprovação Obrigatório (Workflow):**
-  1. Leia e compreenda a demanda (e consulte o progresso atual em `PLANO_ETAPAS.md`).
+  1. Leia e compreenda a demanda.
   2. Apresente **apenas** a proposta técnica / plano de ação de forma objetiva.
   3. **PARE e aguarde.** Você está proibido de criar, editar ou gerar blocos de código de implementação antes da minha aprovação explícita da solução apresentada.
-  4. Ao concluir qualquer etapa ou subetapa aprovada, atualize imediatamente o status no arquivo `PLANO_ETAPAS.md`.
 
 ---
 
@@ -181,6 +184,9 @@ controle-despesas/
 * **Integrações Nativas do Sistema:**
   * **Share Sheet (`expo-sharing`):** Gaveta nativa de compartilhamento do Android para exportar o backup `.json`.
   * **Storage Access Framework (`expo-document-picker`):** Seletor de arquivos nativo do Android para importar o backup `.json`.
+* **Testabilidade e Identificadores (`testID`):**
+  * Todo novo componente ou tela com elementos interativos (`TextInput`, `TouchableOpacity`, `Pressable`, `TouchableRipple`, `Button`, `IconButton`, `FAB`, abas, modais, itens de lista e textos de status/validação) **DEVE** incluir obrigatoriamente a propriedade `testID` (e `tabBarButtonTestID` em abas do Expo Router / navegação de abas).
+  * Convenção de nomenclatura em `kebab-case` com o padrão `<contexto-ou-tela>-<tipo>-<identificador>` (ex.: `med-new-input-commercial-name`, `today-btn-new-medication`, `dose-card-${id}`).
 
 ### 7.2. Detalhamento das Telas
 1. **`LoginScreen` (`AuthStack`):**

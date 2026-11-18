@@ -209,6 +209,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
 
   return (
     <Modal
+      testID="expense-form-modal"
       visible={visible}
       animationType="slide"
       onRequestClose={onClose}
@@ -223,6 +224,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
         >
           <Appbar.Header elevated>
             <Appbar.Action
+              testID="expense-form-btn-close"
               icon="close"
               onPress={onClose}
               disabled={submitting}
@@ -243,6 +245,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
               persistentScrollbar
             >
               <TextInput
+                testID="expense-form-input-amount"
                 mode="outlined"
                 placeholder="R$0,00"
                 value={amountInput}
@@ -253,6 +256,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
               />
 
               <TextInput
+                testID="expense-form-input-description"
                 mode="outlined"
                 label="Descrição *"
                 placeholder="Ex.: Supermercado, Combustível..."
@@ -264,11 +268,13 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
 
               <View>
                 <Pressable
+                  testID="expense-form-pressable-category"
                   onPress={openCategorySelector}
                   disabled={submitting}
                 >
                   <View pointerEvents="box-only">
                     <TextInput
+                      testID="expense-form-input-category"
                       mode="outlined"
                       label="Categoria (1:1) *"
                       placeholder="Selecione uma categoria"
@@ -280,18 +286,24 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
                   </View>
                 </Pressable>
                 {categories.length === 0 && (
-                  <HelperText type="error" visible>
+                  <HelperText
+                    testID="expense-form-text-no-categories"
+                    type="error"
+                    visible
+                  >
                     Você ainda não possui categorias. Crie uma na aba Categorias primeiro.
                   </HelperText>
                 )}
               </View>
 
               <Pressable
+                testID="expense-form-pressable-date"
                 onPress={openDateSelector}
                 disabled={submitting}
               >
                 <View pointerEvents="box-only">
                   <TextInput
+                    testID="expense-form-input-date"
                     mode="outlined"
                     label="Data da Despesa *"
                     value={formatDateBR(toISODateString(expenseDate))}
@@ -312,6 +324,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
               )}
 
               <TextInput
+                testID="expense-form-input-notes"
                 mode="outlined"
                 label="Observações (OBS - Opcional)"
                 placeholder="Informações adicionais sobre o lançamento..."
@@ -324,6 +337,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
               />
 
               <Button
+                testID="expense-form-btn-save"
                 mode="contained"
                 icon="content-save-outline"
                 onPress={handleSave}
@@ -339,6 +353,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
 
           <Portal>
             <Dialog
+              testID="expense-form-dialog-category"
               visible={categoryDialogVisible}
               dismissable={false}
               dismissableBackButton={false}
@@ -365,6 +380,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
                       {categories.map((cat) => (
                         <RadioButton.Item
                           key={cat.id}
+                          testID={`expense-form-radio-category-${cat.id}`}
                           label={cat.name}
                           value={cat.id}
                         />
@@ -374,7 +390,10 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
                 </ScrollView>
               </Dialog.ScrollArea>
               <Dialog.Actions>
-                <Button onPress={() => setCategoryDialogVisible(false)}>
+                <Button
+                  testID="expense-form-btn-close-category-dialog"
+                  onPress={() => setCategoryDialogVisible(false)}
+                >
                   Fechar
                 </Button>
               </Dialog.Actions>
@@ -382,6 +401,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
           </Portal>
 
           <Snackbar
+            testID="expense-form-snackbar-error"
             visible={Boolean(errorMessage)}
             onDismiss={() => setErrorMessage(null)}
             duration={4000}
