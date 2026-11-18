@@ -126,6 +126,7 @@ export const CategoryScreen: React.FC = () => {
       </Appbar.Header>
 
       <FlatList
+        testID="categories-list-items"
         data={categories}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator
@@ -136,6 +137,7 @@ export const CategoryScreen: React.FC = () => {
         ListEmptyComponent={
           <View style={styles.emptyView}>
             <Text
+              testID="categories-text-empty"
               variant="bodyLarge"
               style={{ color: theme.colors.onSurfaceVariant }}
             >
@@ -146,6 +148,7 @@ export const CategoryScreen: React.FC = () => {
         renderItem={({ item }) => (
           <View style={styles.itemRow}>
             <List.Item
+              testID={`categories-item-${item.id}`}
               title={item.name}
               description={item.color ?? '#6200EE'}
               onPress={() => openEditDialog(item)}
@@ -161,6 +164,7 @@ export const CategoryScreen: React.FC = () => {
               )}
               right={() => (
                 <IconButton
+                  testID={`categories-btn-edit-${item.id}`}
                   icon="pencil-outline"
                   onPress={() => openEditDialog(item)}
                   accessibilityLabel={`Editar categoria ${item.name}`}
@@ -172,6 +176,7 @@ export const CategoryScreen: React.FC = () => {
       />
 
       <FAB
+        testID="categories-fab-new"
         icon="plus"
         style={styles.fab}
         onPress={openCreateDialog}
@@ -180,6 +185,7 @@ export const CategoryScreen: React.FC = () => {
 
       <Portal>
         <Dialog
+          testID="categories-dialog-form"
           visible={dialogVisible}
           dismissable={false}
           dismissableBackButton={false}
@@ -195,6 +201,7 @@ export const CategoryScreen: React.FC = () => {
               persistentScrollbar
             >
               <TextInput
+                testID="categories-input-name"
                 mode="outlined"
                 label="Nome da Categoria"
                 value={name}
@@ -212,6 +219,9 @@ export const CategoryScreen: React.FC = () => {
                   return (
                     <Pressable
                       key={hex}
+                      testID={`categories-pressable-color-${hex
+                        .replace('#', '')
+                        .toLowerCase()}`}
                       onPress={() => setSelectedColor(hex)}
                       style={[
                         styles.colorSwatch,
@@ -234,12 +244,14 @@ export const CategoryScreen: React.FC = () => {
           </Dialog.ScrollArea>
           <Dialog.Actions>
             <Button
+              testID="categories-btn-cancel"
               onPress={handleCancelDialog}
               disabled={submitting}
             >
               Cancelar
             </Button>
             <Button
+              testID="categories-btn-save"
               mode="contained"
               onPress={handleSaveCategory}
               loading={submitting}
@@ -252,6 +264,7 @@ export const CategoryScreen: React.FC = () => {
       </Portal>
 
       <Snackbar
+        testID="categories-snackbar-feedback"
         visible={Boolean(snackbarMessage)}
         onDismiss={() => setSnackbarMessage(null)}
         duration={3500}

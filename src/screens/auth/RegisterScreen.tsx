@@ -60,7 +60,10 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
       <Appbar.Header elevated>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
+        <Appbar.BackAction
+          testID="register-btn-back"
+          onPress={() => navigation.goBack()}
+        />
         <Appbar.Content title="Novo Usuário" />
       </Appbar.Header>
 
@@ -86,6 +89,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
             </Text>
 
             <TextInput
+              testID="register-input-username"
               mode="outlined"
               label="Usuário"
               value={username}
@@ -96,11 +100,12 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
               style={styles.input}
               disabled={submitting}
             />
-            <HelperText type="info" visible>
+            <HelperText testID="register-text-username-helper" type="info" visible>
               Mínimo de 3 caracteres.
             </HelperText>
 
             <TextInput
+              testID="register-input-password"
               mode="outlined"
               label="Senha"
               value={password}
@@ -110,6 +115,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
               left={<TextInput.Icon icon="lock-outline" />}
               right={
                 <TextInput.Icon
+                  testID="register-btn-toggle-password"
                   icon={secureText ? 'eye-outline' : 'eye-off-outline'}
                   onPress={() => setSecureText((prev) => !prev)}
                 />
@@ -117,11 +123,12 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
               style={styles.input}
               disabled={submitting}
             />
-            <HelperText type="info" visible>
+            <HelperText testID="register-text-password-helper" type="info" visible>
               Mínimo de 4 caracteres (armazenada com hash SHA-256).
             </HelperText>
 
             <TextInput
+              testID="register-input-confirm-password"
               mode="outlined"
               label="Confirmar Senha"
               value={confirmPassword}
@@ -133,11 +140,16 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
               style={styles.input}
               disabled={submitting}
             />
-            <HelperText type="error" visible={passwordsMismatch}>
+            <HelperText
+              testID="register-text-password-mismatch"
+              type="error"
+              visible={passwordsMismatch}
+            >
               As senhas digitadas não coincidem.
             </HelperText>
 
             <Button
+              testID="register-btn-submit"
               mode="contained"
               onPress={handleRegister}
               loading={submitting}
@@ -152,6 +164,7 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
       </KeyboardAvoidingView>
 
       <Snackbar
+        testID="register-snackbar-error"
         visible={Boolean(errorMessage)}
         onDismiss={() => setErrorMessage(null)}
         duration={4000}

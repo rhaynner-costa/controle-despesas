@@ -89,6 +89,7 @@ export const DashboardScreen: React.FC = () => {
   const renderCategoryItem = ({ item }: { item: ICategorySummaryItem }) => (
     <View style={styles.itemRow}>
       <List.Item
+        testID={`dashboard-item-category-${item.categoryId}`}
         title={item.categoryName}
         description={() => (
           <View style={styles.progressContainer}>
@@ -133,6 +134,7 @@ export const DashboardScreen: React.FC = () => {
       <Appbar.Header elevated>
         <Appbar.Content title="Resultados" />
         <Appbar.Action
+          testID="dashboard-btn-export-pdf"
           icon="file-pdf-box"
           disabled={loading || exportingPdf || !summary}
           onPress={handleExportPdf}
@@ -142,15 +144,21 @@ export const DashboardScreen: React.FC = () => {
 
       <Surface style={styles.monthSelectorBar} elevation={1}>
         <IconButton
+          testID="dashboard-btn-prev-month"
           icon="chevron-left"
           size={26}
           onPress={previousMonth}
           accessibilityLabel="Mês anterior"
         />
-        <Text variant="titleMedium" style={styles.monthTitle}>
+        <Text
+          testID="dashboard-text-current-month"
+          variant="titleMedium"
+          style={styles.monthTitle}
+        >
           {formattedYearMonth}
         </Text>
         <IconButton
+          testID="dashboard-btn-next-month"
           icon="chevron-right"
           size={26}
           onPress={nextMonth}
@@ -164,6 +172,7 @@ export const DashboardScreen: React.FC = () => {
         </View>
       ) : (
         <FlatList
+          testID="dashboard-list-categories"
           data={summary?.categoriesSummary ?? []}
           keyExtractor={(item) => item.categoryId}
           renderItem={renderCategoryItem}
@@ -172,7 +181,11 @@ export const DashboardScreen: React.FC = () => {
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <View style={styles.headerSection}>
-              <Card mode="elevated" style={styles.totalCard}>
+              <Card
+                testID="dashboard-card-total-month"
+                mode="elevated"
+                style={styles.totalCard}
+              >
                 <Card.Content style={styles.totalCardContent}>
                   <Text
                     variant="labelLarge"
@@ -181,6 +194,7 @@ export const DashboardScreen: React.FC = () => {
                     Total do Mês
                   </Text>
                   <Text
+                    testID="dashboard-text-total-amount"
                     variant="headlineMedium"
                     style={[styles.totalValue, { color: theme.colors.primary }]}
                   >
@@ -190,7 +204,11 @@ export const DashboardScreen: React.FC = () => {
               </Card>
 
               {summary && summary.totalMonthAmount > 0 && (
-                <Card mode="elevated" style={styles.metricsCard}>
+                <Card
+                  testID="dashboard-card-daily-metrics"
+                  mode="elevated"
+                  style={styles.metricsCard}
+                >
                   <Card.Content>
                     <Text variant="titleSmall" style={styles.metricsCardTitle}>
                       Indicadores Diários ({summary.daysInMonth} dias no mês)
@@ -209,6 +227,7 @@ export const DashboardScreen: React.FC = () => {
                         </Text>
                       </View>
                       <Text
+                        testID="dashboard-text-daily-average"
                         variant="titleSmall"
                         style={[styles.boldText, { color: theme.colors.primary }]}
                       >
@@ -233,6 +252,7 @@ export const DashboardScreen: React.FC = () => {
                         </Text>
                       </View>
                       <Text
+                        testID="dashboard-text-min-day"
                         variant="titleSmall"
                         style={[styles.boldText, styles.minAmountColor]}
                       >
@@ -259,6 +279,7 @@ export const DashboardScreen: React.FC = () => {
                         </Text>
                       </View>
                       <Text
+                        testID="dashboard-text-max-day"
                         variant="titleSmall"
                         style={[styles.boldText, { color: theme.colors.error }]}
                       >
@@ -343,6 +364,7 @@ export const DashboardScreen: React.FC = () => {
               ) : (
                 <Surface style={styles.emptyCard} elevation={1}>
                   <Text
+                    testID="dashboard-text-empty"
                     variant="bodyMedium"
                     style={{ color: theme.colors.onSurfaceVariant }}
                   >
@@ -362,6 +384,7 @@ export const DashboardScreen: React.FC = () => {
       )}
 
       <Snackbar
+        testID="dashboard-snackbar-feedback"
         visible={Boolean(snackbarMessage)}
         onDismiss={() => setSnackbarMessage(null)}
         duration={3500}
