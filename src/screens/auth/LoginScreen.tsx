@@ -22,6 +22,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { AuthStackParamList } from '../../navigation/AuthStack';
 
@@ -29,6 +30,7 @@ type LoginScreenProps = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const {
     login,
     loginWithBiometrics,
@@ -161,7 +163,15 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.colors.background,
+          paddingBottom: insets.bottom,
+        },
+      ]}
+    >
       <Appbar.Header elevated>
         <Appbar.Content title="Controle de Despesas" />
       </Appbar.Header>

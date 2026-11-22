@@ -18,6 +18,7 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { AuthStackParamList } from '../../navigation/AuthStack';
 
@@ -25,6 +26,7 @@ type RegisterScreenProps = NativeStackScreenProps<AuthStackParamList, 'Register'
 
 export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { register } = useAuth();
 
   const [username, setUsername] = useState<string>('');
@@ -58,7 +60,15 @@ export const RegisterScreen: React.FC<RegisterScreenProps> = ({ navigation }) =>
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.colors.background,
+          paddingBottom: insets.bottom,
+        },
+      ]}
+    >
       <Appbar.Header elevated>
         <Appbar.BackAction
           testID="register-btn-back"
