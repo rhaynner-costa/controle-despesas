@@ -24,6 +24,7 @@ import {
   TextInput,
   useTheme,
 } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../context/AuthContext';
 import { Category } from '../../models/Category';
 import { Expense, IExpenseWithCategoryDTO } from '../../models/Expense';
@@ -62,6 +63,7 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
   onSuccess,
 }) => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { currentUser, services, dataVersion, notifyDataChanged } = useAuth();
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -219,7 +221,10 @@ export const ExpenseFormModal: React.FC<IExpenseFormModalProps> = ({
         <View
           style={[
             styles.container,
-            { backgroundColor: theme.colors.background },
+            {
+              backgroundColor: theme.colors.background,
+              paddingBottom: insets.bottom,
+            },
           ]}
         >
           <Appbar.Header elevated>

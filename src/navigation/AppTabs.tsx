@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DashboardScreen } from '../screens/dashboard/DashboardScreen';
 import { ExpenseListScreen } from '../screens/expenses/ExpenseListScreen';
 import { CategoryScreen } from '../screens/categories/CategoryScreen';
@@ -18,6 +19,7 @@ const Tab = createBottomTabNavigator<AppTabsParamList>();
 
 export const AppTabs: React.FC = () => {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -29,8 +31,8 @@ export const AppTabs: React.FC = () => {
         tabBarStyle: {
           backgroundColor: theme.colors.elevation.level2,
           borderTopColor: theme.colors.outlineVariant,
-          height: 64,
-          paddingBottom: 8,
+          height: 64 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: {
