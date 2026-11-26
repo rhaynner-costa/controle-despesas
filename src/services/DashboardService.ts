@@ -11,6 +11,8 @@ export interface ICategorySummaryItem {
   categoryColor: string;
   totalAmount: number;
   percentage: number;
+  budgetLimit: number | null;
+  budgetPercentage: number | null;
 }
 
 export interface IPieChartSlice {
@@ -98,7 +100,12 @@ export class DashboardService {
 
     const grouped = new Map<
       string,
-      { name: string; color: string; sum: number }
+      {
+        name: string;
+        color: string;
+        sum: number;
+        budgetLimit: number | null;
+      }
     >();
     const dailyMap = new Map<string, number>();
 
@@ -113,6 +120,7 @@ export class DashboardService {
           name: expense.categoryName,
           color,
           sum: Math.round(expense.amount * 100) / 100,
+          budgetLimit: expense.categoryBudgetLimit,
         });
       }
 
@@ -157,12 +165,22 @@ export class DashboardService {
       .map(([categoryId, data]) => {
         const percentage =
           Math.round(((data.sum / totalMonthAmount) * 100) * 10) / 10;
+        const budgetLimit =
+          data.budgetLimit !== null && data.budgetLimit > 0
+            ? data.budgetLimit
+            : null;
+        const budgetPercentage =
+          budgetLimit !== null
+            ? Math.round(((data.sum / budgetLimit) * 100) * 10) / 10
+            : null;
         return {
           categoryId,
           categoryName: data.name,
           categoryColor: data.color,
           totalAmount: data.sum,
           percentage,
+          budgetLimit,
+          budgetPercentage,
         };
       })
       .sort((a, b) => b.totalAmount - a.totalAmount);
@@ -377,6 +395,40 @@ export class DashboardService {
         const formattedPercent = `${item.percentage.toFixed(1).replace('.', ',')}%`;
         const formattedAmount = DashboardService.formatCurrencyBRL(item.totalAmount);
 
+        let budgetHtml = '';
+        const hasBudget =
+          item.budgetLimit !== null && item.budgetPercentage !== null;
+        if (hasBudget) {
+          const budgetWidth = Math.min(
+            100,
+            Math.max(0, item.budgetPercentage!)
+          ).toFixed(1);
+          const budgetGradient = DashboardService.getBudgetCssGradient(
+            item.budgetPercentage!
+          );
+          const budgetStatusColor = DashboardService.getBudgetStatusHexColor(
+            item.budgetPercentage!
+          );
+          const formattedBudget = DashboardService.formatCurrencyBRL(
+            item.budgetLimit!
+          );
+          const formattedBudgetPercent = `${item.budgetPercentage!
+            .toFixed(1)
+            .replace('.', ',')}%`;
+
+          budgetHtml = `
+            <div class="budget-bar-row">
+              <div class="budget-track">
+                <div class="budget-fill" style="width: ${budgetWidth}%; background: ${budgetGradient};"></div>
+              </div>
+              <span class="budget-percent" style="color: ${budgetStatusColor};">${formattedBudgetPercent}</span>
+            </div>
+            <div class="budget-caption">
+              Meta: ${formattedBudget}
+            </div>
+          `;
+        }
+
         return `
         <div class="category-row">
           <div class="left-dot-wrapper">
@@ -393,10 +445,11 @@ export class DashboardService {
           item.categoryColor
         )};"></div>
             </div>
+            ${budgetHtml}
           </div>
           <div class="right-values">
             <div class="amount-text">${formattedAmount}</div>
-            <div class="percent-text">${formattedPercent}</div>
+            ${!hasBudget ? `<div class="percent-text">${formattedPercent}</div>` : ''}
           </div>
         </div>
       `;
@@ -626,6 +679,36 @@ export class DashboardService {
       height: 100%;
       border-radius: 3px;
     }
+    .budget-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      width: 100%;
+    }
+    .budget-track {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background-color: #E0E0E0;
+      overflow: hidden;
+    }
+    .budget-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+    .budget-percent {
+      font-size: 11px;
+      font-weight: bold;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .budget-caption {
+      font-size: 11px;
+      font-weight: 600;
+      color: #49454F;
+      margin-top: 3px;
+    }
     .right-values {
       text-align: right;
       min-width: 110px;
@@ -749,6 +832,33 @@ export class DashboardService {
         </svg>
       </div>
     `;
+  }
+
+  public static getBudgetGradientColors(
+    budgetPercentage: number
+  ): readonly [string, string, ...string[]] {
+    if (budgetPercentage <= 70) {
+      return ['#2E7D32', '#43A047'];
+    }
+    if (budgetPercentage <= 90) {
+      return ['#43A047', '#FBC02D'];
+    }
+    return ['#43A047', '#FBC02D', '#E53935'];
+  }
+
+  public static getBudgetStatusHexColor(budgetPercentage: number): string {
+    if (budgetPercentage <= 70) {
+      return '#2E7D32';
+    }
+    if (budgetPercentage <= 90) {
+      return '#F57F17';
+    }
+    return '#E53935';
+  }
+
+  private static getBudgetCssGradient(budgetPercentage: number): string {
+    const colors = DashboardService.getBudgetGradientColors(budgetPercentage);
+    return `linear-gradient(90deg, ${colors.join(', ')})`;
   }
 
   private static formatCurrencyBRL(value: number): string {

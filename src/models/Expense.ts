@@ -16,6 +16,7 @@ export interface IExpenseWithCategoryDTO {
   categoryId: string;
   categoryName: string;
   categoryColor: string | null;
+  categoryBudgetLimit: number | null;
   amount: number;
   description: string;
   expenseDate: string;

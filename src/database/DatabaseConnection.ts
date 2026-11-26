@@ -43,6 +43,7 @@ export class DatabaseConnection {
         user_id TEXT NOT NULL,
         name TEXT NOT NULL,
         color TEXT,
+        budget_limit REAL,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
       );
 
@@ -66,5 +67,19 @@ export class DatabaseConnection {
       CREATE INDEX IF NOT EXISTS idx_expenses_user_date_active
         ON expenses(user_id, is_deleted, expense_date);
     `);
+
+    await this.ensureCategoriesBudgetColumn();
+  }
+
+  private async ensureCategoriesBudgetColumn(): Promise<void> {
+    const columns = await this.db.getAllAsync<{ name: string }>(
+      `PRAGMA table_info(categories);`
+    );
+    const hasBudgetLimit = columns.some((col) => col.name === 'budget_limit');
+    if (!hasBudgetLimit) {
+      await this.db.execAsync(
+        `ALTER TABLE categories ADD COLUMN budget_limit REAL;`
+      );
+    }
   }
 }

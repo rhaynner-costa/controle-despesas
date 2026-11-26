@@ -6,6 +6,7 @@ interface ICategoryRow {
   user_id: string;
   name: string;
   color: string | null;
+  budget_limit: number | null;
 }
 
 export class CategoryRepository {
@@ -17,28 +18,46 @@ export class CategoryRepository {
 
   public async create(category: Category): Promise<void> {
     await this.db.runAsync(
-      `INSERT INTO categories (id, user_id, name, color) VALUES (?, ?, ?, ?);`,
-      [category.id, category.userId, category.name, category.color]
+      `INSERT INTO categories (id, user_id, name, color, budget_limit) VALUES (?, ?, ?, ?, ?);`,
+      [
+        category.id,
+        category.userId,
+        category.name,
+        category.color,
+        category.budgetLimit,
+      ]
     );
   }
 
   public async insertOrIgnore(category: Category): Promise<void> {
     await this.db.runAsync(
-      `INSERT OR IGNORE INTO categories (id, user_id, name, color) VALUES (?, ?, ?, ?);`,
-      [category.id, category.userId, category.name, category.color]
+      `INSERT OR IGNORE INTO categories (id, user_id, name, color, budget_limit) VALUES (?, ?, ?, ?, ?);`,
+      [
+        category.id,
+        category.userId,
+        category.name,
+        category.color,
+        category.budgetLimit,
+      ]
     );
   }
 
   public async update(category: Category): Promise<void> {
     await this.db.runAsync(
-      `UPDATE categories SET name = ?, color = ? WHERE id = ? AND user_id = ?;`,
-      [category.name, category.color, category.id, category.userId]
+      `UPDATE categories SET name = ?, color = ?, budget_limit = ? WHERE id = ? AND user_id = ?;`,
+      [
+        category.name,
+        category.color,
+        category.budgetLimit,
+        category.id,
+        category.userId,
+      ]
     );
   }
 
   public async findAllByUser(userId: string): Promise<Category[]> {
     const rows = await this.db.getAllAsync<ICategoryRow>(
-      `SELECT id, user_id, name, color FROM categories WHERE user_id = ? ORDER BY name COLLATE NOCASE ASC;`,
+      `SELECT id, user_id, name, color, budget_limit FROM categories WHERE user_id = ? ORDER BY name COLLATE NOCASE ASC;`,
       [userId]
     );
 
@@ -49,13 +68,14 @@ export class CategoryRepository {
           userId: row.user_id,
           name: row.name,
           color: row.color,
+          budgetLimit: row.budget_limit,
         })
     );
   }
 
   public async findById(id: string, userId: string): Promise<Category | null> {
     const row = await this.db.getFirstAsync<ICategoryRow>(
-      `SELECT id, user_id, name, color FROM categories WHERE id = ? AND user_id = ? LIMIT 1;`,
+      `SELECT id, user_id, name, color, budget_limit FROM categories WHERE id = ? AND user_id = ? LIMIT 1;`,
       [id, userId]
     );
 
@@ -68,6 +88,7 @@ export class CategoryRepository {
       userId: row.user_id,
       name: row.name,
       color: row.color,
+      budgetLimit: row.budget_limit,
     });
   }
 

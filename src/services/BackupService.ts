@@ -11,6 +11,7 @@ export interface IBackupCategoryItem {
   id: string;
   name: string;
   color: string | null;
+  budgetLimit?: number | null;
 }
 
 export interface IBackupExpenseItem {
@@ -66,6 +67,7 @@ export class BackupService {
         id: cat.id,
         name: cat.name,
         color: cat.color,
+        budgetLimit: cat.budgetLimit,
       })),
       expenses: expenses.map((exp) => ({
         id: exp.id,
@@ -156,6 +158,10 @@ export class BackupService {
           userId,
           name: String(item.name ?? ''),
           color: item.color ? String(item.color) : null,
+          budgetLimit:
+            item.budgetLimit !== undefined && item.budgetLimit !== null
+              ? Number(item.budgetLimit)
+              : null,
         })
     );
 

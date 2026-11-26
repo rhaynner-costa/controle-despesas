@@ -16,6 +16,7 @@ interface IExpenseRow {
 interface IExpenseWithCategoryRow extends IExpenseRow {
   category_name: string;
   category_color: string | null;
+  category_budget_limit: number | null;
 }
 
 export class ExpenseRepository {
@@ -124,6 +125,7 @@ export class ExpenseRepository {
         e.category_id,
         c.name AS category_name,
         c.color AS category_color,
+        c.budget_limit AS category_budget_limit,
         e.amount,
         e.description,
         e.expense_date,
@@ -145,6 +147,7 @@ export class ExpenseRepository {
       categoryId: row.category_id,
       categoryName: row.category_name,
       categoryColor: row.category_color,
+      categoryBudgetLimit: row.category_budget_limit,
       amount: row.amount,
       description: row.description,
       expenseDate: row.expense_date,
