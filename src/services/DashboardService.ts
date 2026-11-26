@@ -152,12 +152,8 @@ export class DashboardService {
       }
     }
 
-    const timelineChartData: ILineChartPoint[] = dailyMetrics.map((dayItem) => ({
-      value: dayItem.totalAmount,
-      label: dayItem.shortDate,
-      date: dayItem.date,
-      formattedDate: dayItem.formattedDate,
-    }));
+    const timelineChartData: ILineChartPoint[] =
+      DashboardService.buildWeeklyTimelineData(yearMonth, daysInMonth, dailyMap);
 
     const categoriesSummary: ICategorySummaryItem[] = Array.from(
       grouped.entries()
@@ -203,6 +199,103 @@ export class DashboardService {
       categoriesSummary,
       pieChartData,
     };
+  }
+
+  private static readonly BASE_Y_STEPS: readonly number[] = [0, 25, 100, 250, 500];
+
+  public static getChartYAxisSteps(points: ILineChartPoint[]): number[] {
+    const highest = points.reduce((max, pt) => Math.max(max, pt.value), 0);
+    if (highest <= 500) {
+      return [...DashboardService.BASE_Y_STEPS];
+    }
+    const rawFactor = highest / 500;
+    const niceMultipliers = [1.5, 2, 3, 4, 5, 8, 10, 15, 20, 25, 50, 100];
+    const factor =
+      niceMultipliers.find((m) => m >= rawFactor) ?? Math.ceil(rawFactor);
+    return DashboardService.BASE_Y_STEPS.map((step) =>
+      Math.round(step * factor)
+    );
+  }
+
+  public static normalizeValueToChartScale(
+    value: number,
+    steps: readonly number[]
+  ): number {
+    if (value <= 0 || steps.length < 2) {
+      return 0;
+    }
+    const sections = steps.length - 1;
+    const maxStep = steps[sections];
+    if (value >= maxStep) {
+      return maxStep;
+    }
+
+    for (let i = 0; i < sections; i += 1) {
+      const lower = steps[i];
+      const upper = steps[i + 1];
+      if (value >= lower && value <= upper) {
+        const span = upper - lower;
+        const fraction = span > 0 ? (value - lower) / span : 0;
+        const sectionSize = maxStep / sections;
+        return Math.round((i * sectionSize + fraction * sectionSize) * 100) / 100;
+      }
+    }
+
+    return maxStep;
+  }
+
+  public static formatCompactAmount(value: number): string {
+    const rounded = Math.round(value * 100) / 100;
+    if (Number.isInteger(rounded)) {
+      return String(rounded).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    }
+    return rounded
+      .toFixed(2)
+      .replace('.', ',')
+      .replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  }
+
+  private static buildWeeklyTimelineData(
+    yearMonth: string,
+    daysInMonth: number,
+    dailyMap: Map<string, number>
+  ): ILineChartPoint[] {
+    const weekRanges: Array<{ label: string; startDay: number; endDay: number }> =
+      [
+        { label: 'Sem 1', startDay: 1, endDay: 7 },
+        { label: 'Sem 2', startDay: 8, endDay: 14 },
+        { label: 'Sem 3', startDay: 15, endDay: 21 },
+        { label: 'Sem 4', startDay: 22, endDay: 28 },
+      ];
+
+    if (daysInMonth > 28) {
+      weekRanges.push({
+        label: 'Sem 5',
+        startDay: 29,
+        endDay: daysInMonth,
+      });
+    }
+
+    const [, monthStr = '01'] = yearMonth.split('-');
+
+    return weekRanges.map((range) => {
+      let weekSum = 0;
+      for (let d = range.startDay; d <= range.endDay; d += 1) {
+        const dayKey = `${yearMonth}-${String(d).padStart(2, '0')}`;
+        const dayVal = dailyMap.get(dayKey) ?? 0;
+        weekSum = Math.round((weekSum + dayVal) * 100) / 100;
+      }
+
+      const startPad = String(range.startDay).padStart(2, '0');
+      const endPad = String(range.endDay).padStart(2, '0');
+
+      return {
+        value: weekSum,
+        label: range.label,
+        date: `${yearMonth}-${startPad}`,
+        formattedDate: `${startPad}/${monthStr} a ${endPad}/${monthStr}`,
+      };
+    });
   }
 
   private static getDaysInMonth(yearMonth: string): number {
@@ -776,14 +869,19 @@ export class DashboardService {
     const plotWidth = svgWidth - padLeft - padRight;
     const plotHeight = svgHeight - padTop - padBottom;
 
-    const maxValue = Math.max(...points.map((p) => p.value), 1);
+    const ySteps = DashboardService.getChartYAxisSteps(points);
+    const maxValue = ySteps[ySteps.length - 1];
 
     const coords = points.map((point, index) => {
       const x =
         points.length === 1
           ? padLeft + plotWidth / 2
           : padLeft + (index / (points.length - 1)) * plotWidth;
-      const y = padTop + plotHeight - (point.value / maxValue) * plotHeight;
+      const normalizedVal = DashboardService.normalizeValueToChartScale(
+        point.value,
+        ySteps
+      );
+      const y = padTop + plotHeight - (normalizedVal / maxValue) * plotHeight;
       return { x, y, point };
     });
 
@@ -802,6 +900,11 @@ export class DashboardService {
       .map(
         (c) => `
         <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="4" fill="#1565C0" />
+        <text x="${c.x.toFixed(1)}" y="${(c.y - 8).toFixed(
+          1
+        )}" text-anchor="middle" fill="#1C1B1F" font-size="9" font-weight="bold" font-family="sans-serif">${DashboardService.escapeHtml(
+          DashboardService.formatCompactAmount(c.point.value)
+        )}</text>
         <text x="${c.x.toFixed(1)}" y="${(padTop + plotHeight + 18).toFixed(
           1
         )}" text-anchor="middle" fill="#49454F" font-size="10" font-family="sans-serif">${DashboardService.escapeHtml(
@@ -813,7 +916,7 @@ export class DashboardService {
 
     return `
       <div class="timeline-card">
-        <div class="metrics-title">Evolução dos Gastos no Mês</div>
+        <div class="metrics-title">Evolução Semanal dos Gastos no Mês</div>
         <svg width="100%" viewBox="0 0 ${svgWidth} ${svgHeight}">
           <line x1="${padLeft}" y1="${padTop + plotHeight}" x2="${
       svgWidth - padRight

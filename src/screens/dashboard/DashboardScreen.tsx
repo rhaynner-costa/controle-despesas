@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
@@ -31,6 +31,7 @@ function formatCurrencyBRL(value: number): string {
 
 export const DashboardScreen: React.FC = () => {
   const theme = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
   const {
     currentUser,
     services,
@@ -191,6 +192,20 @@ export const DashboardScreen: React.FC = () => {
   };
 
   const totalAmount = summary?.totalMonthAmount ?? 0;
+  const timelinePoints = summary?.timelineChartData ?? [];
+  const timelineYSteps = DashboardService.getChartYAxisSteps(timelinePoints);
+  const timelineMaxValue = timelineYSteps[timelineYSteps.length - 1];
+  const timelineYAxisLabels = timelineYSteps.map((step) =>
+    DashboardService.formatCompactAmount(step)
+  );
+  const chartPlotWidth = Math.max(220, windowWidth - 116);
+  const dynamicSpacing =
+    timelinePoints.length > 1
+      ? Math.max(
+          42,
+          Math.floor((chartPlotWidth - 36) / (timelinePoints.length - 1))
+        )
+      : 56;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -358,15 +373,26 @@ export const DashboardScreen: React.FC = () => {
               {summary && summary.timelineChartData.length > 0 && (
                 <Surface style={styles.timelineCard} elevation={1}>
                   <Text variant="titleSmall" style={styles.timelineTitle}>
-                    Evolução dos Gastos no Mês
+                    Evolução Semanal dos Gastos (R$)
                   </Text>
                   <LineChart
                     data={summary.timelineChartData.map((pt) => ({
-                      value: pt.value,
+                      value: DashboardService.normalizeValueToChartScale(
+                        pt.value,
+                        timelineYSteps
+                      ),
                       label: pt.label,
-                      dataPointText: formatCurrencyBRL(pt.value),
+                      dataPointText:
+                        pt.value > 0
+                          ? DashboardService.formatCompactAmount(pt.value)
+                          : '',
                     }))}
                     areaChart
+                    maxValue={timelineMaxValue}
+                    noOfSections={4}
+                    yAxisLabelTexts={timelineYAxisLabels}
+                    yAxisLabelWidth={42}
+                    disableScroll
                     color={theme.colors.primary}
                     startFillColor={theme.colors.primary}
                     endFillColor={theme.colors.surface}
@@ -378,12 +404,11 @@ export const DashboardScreen: React.FC = () => {
                     textColor={theme.colors.onSurface}
                     textFontSize={9}
                     textShiftY={-8}
-                    textShiftX={-10}
+                    textShiftX={-8}
                     height={150}
-                    noOfSections={4}
-                    spacing={64}
-                    initialSpacing={24}
-                    endSpacing={28}
+                    spacing={dynamicSpacing}
+                    initialSpacing={18}
+                    endSpacing={18}
                     yAxisTextStyle={{
                       color: theme.colors.onSurfaceVariant,
                       fontSize: 10,
