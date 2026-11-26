@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, StyleSheet, useWindowDimensions, View } from 'react-native';
 import {
   ActivityIndicator,
   Appbar,
@@ -14,8 +14,10 @@ import {
   useTheme,
 } from 'react-native-paper';
 import { LineChart, PieChart } from 'react-native-gifted-charts';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 import {
+  DashboardService,
   ICategorySummaryItem,
   IDashboardSummary,
 } from '../../services/DashboardService';
@@ -29,6 +31,7 @@ function formatCurrencyBRL(value: number): string {
 
 export const DashboardScreen: React.FC = () => {
   const theme = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
   const {
     currentUser,
     services,
@@ -86,48 +89,123 @@ export const DashboardScreen: React.FC = () => {
     }
   };
 
-  const renderCategoryItem = ({ item }: { item: ICategorySummaryItem }) => (
-    <View style={styles.itemRow}>
-      <List.Item
-        testID={`dashboard-item-category-${item.categoryId}`}
-        title={item.categoryName}
-        description={() => (
-          <View style={styles.progressContainer}>
-            <ProgressBar
-              progress={Math.min(1, item.percentage / 100)}
-              color={item.categoryColor}
-              style={styles.progressBar}
-            />
-          </View>
-        )}
-        left={() => (
-          <View style={styles.leftIndicatorWrapper}>
-            <View
-              style={[
-                styles.colorDot,
-                { backgroundColor: item.categoryColor },
-              ]}
-            />
-          </View>
-        )}
-        right={() => (
-          <View style={styles.rightValues}>
-            <Text variant="titleSmall" style={styles.amountText}>
-              {formatCurrencyBRL(item.totalAmount)}
-            </Text>
-            <Text
-              variant="bodySmall"
-              style={{ color: theme.colors.onSurfaceVariant }}
-            >
-              {item.percentage.toFixed(1).replace('.', ',')}%
-            </Text>
-          </View>
-        )}
-      />
-    </View>
-  );
+  const renderCategoryItem = ({ item }: { item: ICategorySummaryItem }) => {
+    const hasBudget =
+      item.budgetLimit !== null && item.budgetPercentage !== null;
+    const budgetProgressFraction = hasBudget
+      ? Math.min(1, Math.max(0, (item.budgetPercentage ?? 0) / 100))
+      : 0;
+    const budgetGradientColors = hasBudget
+      ? DashboardService.getBudgetGradientColors(item.budgetPercentage ?? 0)
+      : (['#2E7D32', '#43A047'] as const);
+    const budgetStatusColor = hasBudget
+      ? DashboardService.getBudgetStatusHexColor(item.budgetPercentage ?? 0)
+      : theme.colors.onSurfaceVariant;
+
+    return (
+      <View style={styles.itemRow}>
+        <List.Item
+          testID={`dashboard-item-category-${item.categoryId}`}
+          title={item.categoryName}
+          description={() => (
+            <View style={styles.progressContainer}>
+              <ProgressBar
+                testID={`dashboard-expense-bar-${item.categoryId}`}
+                progress={Math.min(1, item.percentage / 100)}
+                color={item.categoryColor}
+                style={styles.progressBar}
+              />
+              {hasBudget && (
+                <View
+                  testID={`dashboard-budget-container-${item.categoryId}`}
+                  style={styles.budgetSection}
+                >
+                  <View style={styles.budgetBarRow}>
+                    <View
+                      testID={`dashboard-budget-bar-${item.categoryId}`}
+                      style={styles.budgetTrack}
+                    >
+                      <LinearGradient
+                        colors={budgetGradientColors}
+                        start={{ x: 0, y: 0.5 }}
+                        end={{ x: 1, y: 0.5 }}
+                        style={[
+                          styles.budgetFill,
+                          { width: `${budgetProgressFraction * 100}%` },
+                        ]}
+                      />
+                    </View>
+                    <Text
+                      testID={`dashboard-budget-percent-${item.categoryId}`}
+                      variant="labelSmall"
+                      numberOfLines={1}
+                      style={[
+                        styles.budgetPercentText,
+                        { color: budgetStatusColor },
+                      ]}
+                    >
+                      {`${item.budgetPercentage!.toFixed(1).replace('.', ',')}%`}
+                    </Text>
+                  </View>
+                  <Text
+                    testID={`dashboard-budget-text-${item.categoryId}`}
+                    variant="labelSmall"
+                    style={[
+                      styles.budgetCaption,
+                      { color: theme.colors.onSurfaceVariant },
+                    ]}
+                  >
+                    Meta: {formatCurrencyBRL(item.budgetLimit!)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
+          left={() => (
+            <View style={styles.leftIndicatorWrapper}>
+              <View
+                style={[
+                  styles.colorDot,
+                  { backgroundColor: item.categoryColor },
+                ]}
+              />
+            </View>
+          )}
+          right={() => (
+            <View style={styles.rightValues}>
+              <Text variant="titleSmall" style={styles.amountText}>
+                {formatCurrencyBRL(item.totalAmount)}
+              </Text>
+              {!hasBudget && (
+                <Text
+                  variant="bodySmall"
+                  style={{ color: theme.colors.onSurfaceVariant }}
+                >
+                  {item.percentage.toFixed(1).replace('.', ',')}%
+                </Text>
+              )}
+            </View>
+          )}
+        />
+      </View>
+    );
+  };
 
   const totalAmount = summary?.totalMonthAmount ?? 0;
+  const timelinePoints = summary?.timelineChartData ?? [];
+  const timelineYSteps = DashboardService.getChartYAxisSteps(timelinePoints);
+  const timelineMaxValue = timelineYSteps[timelineYSteps.length - 1];
+  const timelineYAxisLabels = timelineYSteps.map((step) =>
+    DashboardService.formatCompactAmount(step)
+  );
+  const chartPlotWidth = Math.max(220, windowWidth - 116);
+  const dynamicSpacing =
+    timelinePoints.length > 1
+      ? Math.max(
+          42,
+          Math.floor((chartPlotWidth - 36) / (timelinePoints.length - 1))
+        )
+      : 56;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -295,15 +373,26 @@ export const DashboardScreen: React.FC = () => {
               {summary && summary.timelineChartData.length > 0 && (
                 <Surface style={styles.timelineCard} elevation={1}>
                   <Text variant="titleSmall" style={styles.timelineTitle}>
-                    Evolução dos Gastos no Mês
+                    Evolução Semanal dos Gastos (R$)
                   </Text>
                   <LineChart
                     data={summary.timelineChartData.map((pt) => ({
-                      value: pt.value,
+                      value: DashboardService.normalizeValueToChartScale(
+                        pt.value,
+                        timelineYSteps
+                      ),
                       label: pt.label,
-                      dataPointText: formatCurrencyBRL(pt.value),
+                      dataPointText:
+                        pt.value > 0
+                          ? DashboardService.formatCompactAmount(pt.value)
+                          : '',
                     }))}
                     areaChart
+                    maxValue={timelineMaxValue}
+                    noOfSections={4}
+                    yAxisLabelTexts={timelineYAxisLabels}
+                    yAxisLabelWidth={42}
+                    disableScroll
                     color={theme.colors.primary}
                     startFillColor={theme.colors.primary}
                     endFillColor={theme.colors.surface}
@@ -315,12 +404,11 @@ export const DashboardScreen: React.FC = () => {
                     textColor={theme.colors.onSurface}
                     textFontSize={9}
                     textShiftY={-8}
-                    textShiftX={-10}
+                    textShiftX={-8}
                     height={150}
-                    noOfSections={4}
-                    spacing={64}
-                    initialSpacing={24}
-                    endSpacing={28}
+                    spacing={dynamicSpacing}
+                    initialSpacing={18}
+                    endSpacing={18}
                     yAxisTextStyle={{
                       color: theme.colors.onSurfaceVariant,
                       fontSize: 10,
@@ -503,12 +591,42 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   progressContainer: {
+    width: '100%',
     marginTop: 8,
     paddingRight: 12,
   },
   progressBar: {
     height: 6,
     borderRadius: 3,
+  },
+  budgetSection: {
+    width: '100%',
+    marginTop: 6,
+  },
+  budgetBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    gap: 8,
+  },
+  budgetTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E0E0E0',
+    overflow: 'hidden',
+  },
+  budgetFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  budgetPercentText: {
+    fontWeight: 'bold',
+    flexShrink: 0,
+  },
+  budgetCaption: {
+    marginTop: 2,
+    fontWeight: 'bold',
   },
   rightValues: {
     justifyContent: 'center',

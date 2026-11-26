@@ -17,6 +17,7 @@ import {
   List,
   Portal,
   Snackbar,
+  Switch,
   Text,
   TextInput,
   useTheme,
@@ -24,6 +25,14 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
 import { Category } from '../../models/Category';
+import { Expense } from '../../models/Expense';
+
+function formatCurrencyBRL(value: number): string {
+  return `R$ ${value
+    .toFixed(2)
+    .replace('.', ',')
+    .replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`;
+}
 
 const MATERIAL_COLORS: string[] = [
   '#E53935',
@@ -49,6 +58,8 @@ export const CategoryScreen: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [name, setName] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>(MATERIAL_COLORS[0]);
+  const [budgetEnabled, setBudgetEnabled] = useState<boolean>(false);
+  const [budgetInput, setBudgetInput] = useState<string>('');
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
 
@@ -70,6 +81,8 @@ export const CategoryScreen: React.FC = () => {
     setEditingCategory(null);
     setName('');
     setSelectedColor(MATERIAL_COLORS[0]);
+    setBudgetEnabled(false);
+    setBudgetInput('');
     setDialogVisible(true);
   };
 
@@ -77,7 +90,26 @@ export const CategoryScreen: React.FC = () => {
     setEditingCategory(category);
     setName(category.name);
     setSelectedColor(category.color ?? MATERIAL_COLORS[0]);
+    if (category.budgetLimit !== null && category.budgetLimit > 0) {
+      const centsStr = String(Math.round(category.budgetLimit * 100));
+      setBudgetEnabled(true);
+      setBudgetInput(Expense.formatCurrencyInput(centsStr));
+    } else {
+      setBudgetEnabled(false);
+      setBudgetInput('');
+    }
     setDialogVisible(true);
+  };
+
+  const handleToggleBudget = (enabled: boolean): void => {
+    setBudgetEnabled(enabled);
+    if (!enabled) {
+      setBudgetInput('');
+    }
+  };
+
+  const handleBudgetAmountChange = (rawText: string): void => {
+    setBudgetInput(Expense.formatCurrencyInput(rawText));
   };
 
   const handleCancelDialog = (): void => {
@@ -90,6 +122,16 @@ export const CategoryScreen: React.FC = () => {
     if (!currentUser || !services) {
       return;
     }
+
+    let parsedBudgetLimit: number | null = null;
+    if (budgetEnabled) {
+      parsedBudgetLimit = Expense.parseCurrencyInput(budgetInput);
+      if (!Number.isFinite(parsedBudgetLimit) || parsedBudgetLimit <= 0) {
+        setSnackbarMessage('Informe um valor de meta válido maior que zero.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     try {
       if (editingCategory) {
@@ -97,14 +139,16 @@ export const CategoryScreen: React.FC = () => {
           editingCategory.id,
           currentUser.id,
           name,
-          selectedColor
+          selectedColor,
+          parsedBudgetLimit
         );
         setSnackbarMessage('Categoria atualizada com sucesso.');
       } else {
         await services.categoryService.createCategory(
           currentUser.id,
           name,
-          selectedColor
+          selectedColor,
+          parsedBudgetLimit
         );
         setSnackbarMessage('Categoria criada com sucesso.');
       }
@@ -150,7 +194,13 @@ export const CategoryScreen: React.FC = () => {
             <List.Item
               testID={`categories-item-${item.id}`}
               title={item.name}
-              description={item.color ?? '#6200EE'}
+              description={
+                item.budgetLimit !== null
+                  ? `${item.color ?? '#6200EE'} • Meta: ${formatCurrencyBRL(
+                      item.budgetLimit
+                    )}`
+                  : item.color ?? '#6200EE'
+              }
               onPress={() => openEditDialog(item)}
               left={() => (
                 <View style={styles.leftWrapper}>
@@ -209,6 +259,33 @@ export const CategoryScreen: React.FC = () => {
                 style={styles.dialogInput}
                 disabled={submitting}
               />
+
+              <View style={styles.budgetToggleRow}>
+                <Text variant="bodyMedium" style={styles.budgetToggleLabel}>
+                  Definir meta de gasto (teto)
+                </Text>
+                <Switch
+                  testID="categories-switch-budget"
+                  value={budgetEnabled}
+                  onValueChange={handleToggleBudget}
+                  disabled={submitting}
+                />
+              </View>
+
+              {budgetEnabled && (
+                <TextInput
+                  testID="categories-input-budget"
+                  mode="outlined"
+                  label="Valor da Meta (R$)"
+                  placeholder="R$0,00"
+                  value={budgetInput}
+                  onChangeText={handleBudgetAmountChange}
+                  keyboardType="number-pad"
+                  maxLength={15}
+                  style={styles.dialogInput}
+                  disabled={submitting}
+                />
+              )}
 
               <Text variant="labelLarge" style={styles.paletteLabel}>
                 Cor no Gráfico (Material Design)
@@ -311,7 +388,7 @@ const styles = StyleSheet.create({
     bottom: 16,
   },
   dialogScrollArea: {
-    maxHeight: 320,
+    maxHeight: 380,
     paddingHorizontal: 0,
   },
   dialogScrollContent: {
@@ -320,6 +397,16 @@ const styles = StyleSheet.create({
   },
   dialogInput: {
     marginBottom: 16,
+  },
+  budgetToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  budgetToggleLabel: {
+    flex: 1,
+    paddingRight: 12,
   },
   paletteLabel: {
     marginBottom: 8,

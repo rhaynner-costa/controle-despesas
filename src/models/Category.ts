@@ -3,6 +3,7 @@ export interface ICategoryProps {
   userId: string;
   name: string;
   color: string | null;
+  budgetLimit?: number | null;
 }
 
 export class Category {
@@ -10,8 +11,27 @@ export class Category {
   private readonly _userId: string;
   private _name: string;
   private _color: string | null;
+  private _budgetLimit: number | null;
 
   private static readonly HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{6})$/;
+  public static readonly MAX_BUDGET_LIMIT = 99999999.99;
+
+  private static validateAndNormalizeBudgetLimit(
+    budgetLimit?: number | null
+  ): number | null {
+    if (budgetLimit === undefined || budgetLimit === null) {
+      return null;
+    }
+    if (!Number.isFinite(budgetLimit) || budgetLimit <= 0) {
+      throw new Error('O valor da meta da categoria deve ser maior que zero.');
+    }
+    if (budgetLimit > Category.MAX_BUDGET_LIMIT) {
+      throw new Error(
+        'O valor da meta excede o limite máximo permitido (R$99.999.999,99).'
+      );
+    }
+    return Math.round(budgetLimit * 100) / 100;
+  }
 
   public constructor(props: ICategoryProps) {
     if (!props.id.trim()) {
@@ -31,10 +51,15 @@ export class Category {
       throw new Error('A cor da categoria deve estar no formato hexadecimal (#RRGGBB).');
     }
 
+    const normalizedBudgetLimit = Category.validateAndNormalizeBudgetLimit(
+      props.budgetLimit
+    );
+
     this._id = props.id.trim();
     this._userId = props.userId.trim();
     this._name = trimmedName;
     this._color = normalizedColor;
+    this._budgetLimit = normalizedBudgetLimit;
   }
 
   public get id(): string {
@@ -53,7 +78,15 @@ export class Category {
     return this._color;
   }
 
-  public updateDetails(name: string, color: string | null): void {
+  public get budgetLimit(): number | null {
+    return this._budgetLimit;
+  }
+
+  public updateDetails(
+    name: string,
+    color: string | null,
+    budgetLimit?: number | null
+  ): void {
     const trimmedName = name.trim();
     if (!trimmedName) {
       throw new Error('O nome da categoria é obrigatório.');
@@ -64,7 +97,12 @@ export class Category {
       throw new Error('A cor da categoria deve estar no formato hexadecimal (#RRGGBB).');
     }
 
+    const normalizedBudgetLimit = Category.validateAndNormalizeBudgetLimit(
+      budgetLimit
+    );
+
     this._name = trimmedName;
     this._color = normalizedColor;
+    this._budgetLimit = normalizedBudgetLimit;
   }
 }

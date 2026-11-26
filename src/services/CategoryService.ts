@@ -12,13 +12,15 @@ export class CategoryService {
   public async createCategory(
     userId: string,
     name: string,
-    color: string | null
+    color: string | null,
+    budgetLimit: number | null = null
   ): Promise<Category> {
     const category = new Category({
       id: Crypto.randomUUID(),
       userId,
       name,
       color,
+      budgetLimit,
     });
 
     await this.categoryRepository.create(category);
@@ -29,14 +31,15 @@ export class CategoryService {
     id: string,
     userId: string,
     name: string,
-    color: string | null
+    color: string | null,
+    budgetLimit: number | null = null
   ): Promise<Category> {
     const existing = await this.categoryRepository.findById(id, userId);
     if (!existing) {
       throw new Error('Categoria não encontrada para este usuário.');
     }
 
-    existing.updateDetails(name, color);
+    existing.updateDetails(name, color, budgetLimit);
     await this.categoryRepository.update(existing);
     return existing;
   }
